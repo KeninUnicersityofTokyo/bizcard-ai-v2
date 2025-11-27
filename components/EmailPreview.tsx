@@ -1,12 +1,10 @@
 ```javascript
-"use client";
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Send, Copy, Check, Save, Loader2, Mic, MicOff, Sparkles } from "lucide-react";
 import { Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { getFolders } from "@/lib/db";
-import { refineEmail } from "@/actions/refineEmail";
+import { useAiRefine } from "@/hooks/useAiRefine";
 
 interface EmailData {
     email: string;
@@ -30,77 +28,16 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
-    // AI Refinement State
-    const [isRecording, setIsRecording] = useState(false);
-    const [isRefining, setIsRefining] = useState(false);
-    const recognitionRef = useRef<any>(null);
+    const { isRecording, isRefining, toggleRecording } = useAiRefine(
+        data.body,
+        (newBody) => setData((prev) => ({ ...prev, body: newBody }))
+    );
 
     useEffect(() => {
         if (user) {
             getFolders(user.uid).then(setFolders);
         }
     }, [user]);
-
-    // Initialize Speech Recognition
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const SpeechRecognition =
-                (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-            if (SpeechRecognition) {
-                recognitionRef.current = new SpeechRecognition();
-                recognitionRef.current.continuous = false; // Stop after one sentence/command
-                recognitionRef.current.interimResults = false;
-                recognitionRef.current.lang = "ja-JP";
-
-                recognitionRef.current.onresult = async (event: any) => {
-                    const transcript = event.results[0][0].transcript;
-                    console.log("Voice Command:", transcript);
-                    setIsRecording(false);
-                    await handleRefine(transcript);
-                };
-
-                recognitionRef.current.onerror = (event: any) => {
-                    console.error("Speech recognition error", event.error);
-                    setIsRecording(false);
-                };
-
-                recognitionRef.current.onend = () => {
-                    setIsRecording(false);
-                };
-            }
-        }
-    }, [data.body]); // Re-bind if needed, though data.body is used in handleRefine
-
-    const handleRefine = async (instruction: string) => {
-        if (!instruction) return;
-        setIsRefining(true);
-        try {
-            const result = await refineEmail(data.body, instruction);
-            if (result && result.body) {
-                setData(prev => ({ ...prev, body: result.body }));
-            }
-        } catch (error) {
-            console.error("Refinement failed:", error);
-            alert("AI修正に失敗しました。");
-        } finally {
-            setIsRefining(false);
-        }
-    };
-
-    const toggleRecording = () => {
-        if (!recognitionRef.current) {
-            alert("このブラウザは音声認識をサポートしていません。");
-            return;
-        }
-
-        if (isRecording) {
-            recognitionRef.current.stop();
-        } else {
-            recognitionRef.current.start();
-            setIsRecording(true);
-        }
-    };
 
     const handleChange = (field: keyof EmailData, value: string) => {
         setData((prev) => ({ ...prev, [field]: value }));

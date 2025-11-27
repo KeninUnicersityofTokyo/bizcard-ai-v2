@@ -1,12 +1,11 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Building, User, Calendar, Trash2, Send, Folder as FolderIcon } from "lucide-react";
+import { ArrowLeft, Mail, Building, User, Calendar, Trash2, Send, Folder as FolderIcon, Mic, MicOff, Sparkles, Loader2 } from "lucide-react";
 import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { getContact, deleteContact, updateContact, getFolders, getContactImage } from "@/lib/db";
+import { useAiRefine } from "@/hooks/useAiRefine";
 
 export default function ContactDetailPage({ params }: { params: { id: string } }) {
     const router = useRouter();
@@ -22,6 +21,11 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
         subject: "",
         body: ""
     });
+
+    const { isRecording, isRefining, toggleRecording } = useAiRefine(
+        editForm.body,
+        (newBody) => setEditForm((prev) => ({ ...prev, body: newBody }))
+    );
 
     useEffect(() => {
         if (!user) return;
@@ -251,12 +255,38 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Body</label>
                                 {isEditing ? (
-                                    <textarea
-                                        value={editForm.body}
-                                        onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
-                                        rows={10}
-                                        className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm leading-relaxed focus:ring-2 focus:ring-black outline-none"
-                                    />
+                                    <div className="relative">
+                                        <textarea
+                                            value={editForm.body}
+                                            onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
+                                            rows={10}
+                                            className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm leading-relaxed focus:ring-2 focus:ring-black outline-none"
+                                        />
+                                        {/* AI Refinement Button */}
+                                        <div className="absolute bottom-4 right-4 z-10">
+                                            <button
+                                                onClick={toggleRecording}
+                                                disabled={isRefining}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg transition-all ${isRecording
+                                                    ? "bg-red-500 text-white animate-pulse"
+                                                    : isRefining
+                                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                        : "bg-black text-white hover:bg-gray-800"
+                                                    }`}
+                                            >
+                                                {isRefining ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : isRecording ? (
+                                                    <MicOff className="w-4 h-4" />
+                                                ) : (
+                                                    <Sparkles className="w-4 h-4" />
+                                                )}
+                                                <span className="text-xs font-bold">
+                                                    {isRefining ? "Refining..." : isRecording ? "Listening..." : "AI Refine"}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 ) : (
                                     <div className="p-4 bg-gray-50 rounded-xl text-gray-900 text-sm leading-relaxed whitespace-pre-wrap border border-gray-100">
                                         {contact.generatedEmail.body}
