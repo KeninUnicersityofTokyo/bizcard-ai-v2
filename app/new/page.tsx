@@ -82,7 +82,7 @@ export default function NewContactPage() {
         try {
             // Fire and forget - don't await the result for UI responsiveness
             saveContact(user.uid, {
-                folderId,
+                folderId: folderId || "drafts",
                 name: emailData.name,
                 company: isManualMode ? manualDetails.company : "Unknown",
                 email: emailData.email,

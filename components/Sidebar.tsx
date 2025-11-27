@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Folder as FolderIcon, Plus, Trash2, Menu, X, Inbox } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Folder as FolderIcon, Plus, Trash2, Menu, X, Inbox, Send } from "lucide-react";
 import { Folder } from "@/types";
 import { getFolders, createFolder, deleteFolder } from "@/lib/db";
 
@@ -12,6 +12,7 @@ import { LogOut, User as UserIcon } from "lucide-react";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { user, signInWithGoogle, signOut } = useAuth();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -105,10 +106,16 @@ export default function Sidebar() {
 
                     <nav className="flex-1 overflow-y-auto">
                         <NavItem
-                            href="/"
+                            href="/?folderId=drafts"
                             icon={Inbox}
-                            label="Inbox"
-                            active={pathname === "/" || pathname.startsWith("/folder/inbox")}
+                            label="Drafts"
+                            active={pathname === "/" && (searchParams.get("folderId") === "drafts" || !searchParams.get("folderId"))}
+                        />
+                        <NavItem
+                            href="/?folderId=sent"
+                            icon={Send}
+                            label="Sent"
+                            active={searchParams.get("folderId") === "sent"}
                         />
 
                         {user && (

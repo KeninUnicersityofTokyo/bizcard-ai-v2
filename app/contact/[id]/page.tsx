@@ -14,6 +14,14 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
     const [contact, setContact] = useState<Contact | null>(null);
     const [folders, setFolders] = useState<Folder[]>([]);
     const [image, setImage] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        name: "",
+        company: "",
+        email: "",
+        subject: "",
+        body: ""
+    });
 
     useEffect(() => {
         if (!user) return;
@@ -21,6 +29,13 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
         getContact(user.uid, params.id).then((found) => {
             if (found) {
                 setContact(found);
+                setEditForm({
+                    name: found.name,
+                    company: found.company,
+                    email: found.email,
+                    subject: found.generatedEmail.subject,
+                    body: found.generatedEmail.body
+                });
                 // If legacy data has image, use it. Otherwise fetch from subcollection.
                 if (found.imageBase64) {
                     setImage(found.imageBase64);
@@ -50,16 +65,37 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
         setContact((prev: Contact | null) => prev ? { ...prev, folderId } : null);
     };
 
-    const handleOpenMailer = () => {
-        if (!contact) return;
+    const handleOpenMailer = async () => {
+        if (!contact || !user) return;
+
+        // Auto-move to Sent folder
+        await updateContact(user.uid, params.id, { folderId: "sent" });
+        setContact((prev: Contact | null) => prev ? { ...prev, folderId: "sent" } : null);
+
         const subject = encodeURIComponent(contact.generatedEmail.subject);
         const body = encodeURIComponent(contact.generatedEmail.body);
         window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}`;
     };
 
-    if (!contact) return <div className="p-20 text-center text-gray-400">Loading...</div>;
+    const handleSaveEdit = async () => {
+        if (!user || !contact) return;
 
-    const currentFolder = folders.find(f => f.id === contact.folderId)?.name || "Inbox";
+        const updates = {
+            name: editForm.name,
+            company: editForm.company,
+            email: editForm.email,
+            generatedEmail: {
+                subject: editForm.subject,
+                body: editForm.body
+            }
+        };
+
+        await updateContact(user.uid, params.id, updates);
+        setContact({ ...contact, ...updates });
+        setIsEditing(false);
+    };
+
+    if (!contact) return <div className="p-20 text-center text-gray-400">Loading...</div>;
 
     return (
         <div className="max-w-4xl mx-auto pb-20">
@@ -68,14 +104,51 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                     <Link href="/" className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
                         <ArrowLeft className="w-6 h-6 text-gray-900" />
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{contact.name}</h1>
+                    {isEditing ? (
+                        <input
+                            type="text"
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            className="text-3xl font-bold text-gray-900 tracking-tight bg-transparent border-b border-gray-300 focus:border-black outline-none"
+                        />
+                    ) : (
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{contact.name}</h1>
+                    )}
                 </div>
-                <button
-                    onClick={handleDelete}
-                    className="p-2.5 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors"
-                >
-                    <Trash2 className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                    {isEditing ? (
+                        <>
+                            <button
+                                onClick={() => setIsEditing(false)}
+                                className="p-2.5 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                className="px-4 py-2.5 bg-black text-white hover:bg-gray-800 rounded-xl transition-colors font-medium flex items-center gap-2"
+                            >
+                                <Send className="w-4 h-4" />
+                                Save
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="p-2.5 text-gray-400 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-colors"
+                            >
+                                <FolderIcon className="w-5 h-5" /> {/* Reusing icon for edit temporarily or import Edit */}
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="p-2.5 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                            </button>
+                        </>
+                    )}
+                </div>
             </header>
 
             <div className="grid gap-8 md:grid-cols-3">
@@ -87,13 +160,33 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
                                 <Building className="w-5 h-5 text-gray-500" />
                             </div>
-                            <span className="text-lg font-medium">{contact.company}</span>
+                            {isEditing ? (
+                                <input
+                                    type="text"
+                                    value={editForm.company}
+                                    onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
+                                    className="flex-1 p-2 border border-gray-200 rounded-lg"
+                                    placeholder="Company"
+                                />
+                            ) : (
+                                <span className="text-lg font-medium">{contact.company}</span>
+                            )}
                         </div>
                         <div className="flex items-center gap-4 text-gray-900">
                             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
                                 <Mail className="w-5 h-5 text-gray-500" />
                             </div>
-                            <span className="text-lg font-medium">{contact.email}</span>
+                            {isEditing ? (
+                                <input
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                    className="flex-1 p-2 border border-gray-200 rounded-lg"
+                                    placeholder="Email"
+                                />
+                            ) : (
+                                <span className="text-lg font-medium">{contact.email}</span>
+                            )}
                         </div>
                         <div className="flex items-center gap-4 text-gray-500">
                             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
@@ -113,7 +206,8 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                                     onChange={(e) => handleMoveFolder(e.target.value)}
                                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm font-medium outline-none focus:ring-2 focus:ring-gray-200 appearance-none"
                                 >
-                                    <option value="inbox">Inbox</option>
+                                    <option value="drafts">Drafts</option>
+                                    <option value="sent">Sent</option>
                                     {folders.map((f) => (
                                         <option key={f.id} value={f.id}>
                                             {f.name}
@@ -136,23 +230,43 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                         <div className="space-y-6">
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Subject</label>
-                                <div className="p-4 bg-gray-50 rounded-xl text-gray-900 text-sm font-medium border border-gray-100">
-                                    {contact.generatedEmail.subject}
-                                </div>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editForm.subject}
+                                        onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                                        className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm font-medium focus:ring-2 focus:ring-black outline-none"
+                                    />
+                                ) : (
+                                    <div className="p-4 bg-gray-50 rounded-xl text-gray-900 text-sm font-medium border border-gray-100">
+                                        {contact.generatedEmail.subject}
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Body</label>
-                                <div className="p-4 bg-gray-50 rounded-xl text-gray-900 text-sm leading-relaxed whitespace-pre-wrap border border-gray-100">
-                                    {contact.generatedEmail.body}
-                                </div>
+                                {isEditing ? (
+                                    <textarea
+                                        value={editForm.body}
+                                        onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
+                                        rows={10}
+                                        className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm leading-relaxed focus:ring-2 focus:ring-black outline-none"
+                                    />
+                                ) : (
+                                    <div className="p-4 bg-gray-50 rounded-xl text-gray-900 text-sm leading-relaxed whitespace-pre-wrap border border-gray-100">
+                                        {contact.generatedEmail.body}
+                                    </div>
+                                )}
                             </div>
-                            <button
-                                onClick={handleOpenMailer}
-                                className="w-full py-3.5 bg-black hover:bg-gray-800 text-white rounded-full font-bold transition-all shadow-md flex items-center justify-center gap-2"
-                            >
-                                <Send className="w-4 h-4" />
-                                Open in Mail App
-                            </button>
+                            {!isEditing && (
+                                <button
+                                    onClick={handleOpenMailer}
+                                    className="w-full py-3.5 bg-black hover:bg-gray-800 text-white rounded-full font-bold transition-all shadow-md flex items-center justify-center gap-2"
+                                >
+                                    <Send className="w-4 h-4" />
+                                    Open in Mail App
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
