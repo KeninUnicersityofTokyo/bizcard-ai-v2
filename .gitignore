@@ -29,3 +29,5 @@ ts-debug.log*
 
 # vercel
 .vercel
+
+/lib/generated/prisma

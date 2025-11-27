@@ -5,32 +5,50 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Folder as FolderIcon, Plus, Trash2, Menu, X, Inbox } from "lucide-react";
 import { Folder } from "@/types";
-import { getFolders, createFolder, deleteFolder } from "@/lib/storage";
+import { getFolders, createFolder, deleteFolder } from "@/lib/db";
+
+import { useAuth } from "@/context/AuthContext";
+import { LogOut, User as UserIcon } from "lucide-react";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const { user, signInWithGoogle, signOut } = useAuth();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        setFolders(getFolders());
-    }, []);
+        if (user) {
+            getFolders(user.uid).then(setFolders);
+        } else {
+            setFolders([]);
+        }
+    }, [user]);
 
-    const handleCreateFolder = (e: React.FormEvent) => {
+    const handleCreateFolder = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newFolderName.trim()) return;
-        const newFolder = createFolder(newFolderName);
-        setFolders([...folders, newFolder]);
-        setNewFolderName("");
-        setIsCreating(false);
+        if (!newFolderName.trim() || !user) return;
+
+        try {
+            const newFolder = await createFolder(user.uid, newFolderName);
+            setFolders([...folders, newFolder]);
+            setNewFolderName("");
+            setIsCreating(false);
+        } catch (error) {
+            console.error("Error creating folder:", error);
+        }
     };
 
-    const handleDeleteFolder = (id: string) => {
+    const handleDeleteFolder = async (id: string) => {
+        if (!user) return;
         if (confirm("フォルダを削除しますか？中の連絡先はInboxに移動します。")) {
-            deleteFolder(id);
-            setFolders(folders.filter((f) => f.id !== id));
+            try {
+                await deleteFolder(user.uid, id);
+                setFolders(folders.filter((f) => f.id !== id));
+            } catch (error) {
+                console.error("Error deleting folder:", error);
+            }
         }
     };
 
@@ -93,53 +111,82 @@ export default function Sidebar() {
                             active={pathname === "/" || pathname.startsWith("/folder/inbox")}
                         />
 
-                        <div className="mt-10 mb-4 flex items-center justify-between px-3">
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                Folders
-                            </span>
-                            <button
-                                onClick={() => setIsCreating(true)}
-                                className="text-gray-400 hover:text-gray-900 transition-colors p-1 hover:bg-gray-100 rounded"
-                            >
-                                <Plus className="w-4 h-4" />
-                            </button>
-                        </div>
+                        {user && (
+                            <>
+                                <div className="mt-10 mb-4 flex items-center justify-between px-3">
+                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                        Folders
+                                    </span>
+                                    <button
+                                        onClick={() => setIsCreating(true)}
+                                        className="text-gray-400 hover:text-gray-900 transition-colors p-1 hover:bg-gray-100 rounded"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
 
-                        {isCreating && (
-                            <form onSubmit={handleCreateFolder} className="mb-2 px-2">
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    placeholder="Folder Name"
-                                    value={newFolderName}
-                                    onChange={(e) => setNewFolderName(e.target.value)}
-                                    onBlur={() => !newFolderName && setIsCreating(false)}
-                                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition-all"
-                                />
-                            </form>
+                                {isCreating && (
+                                    <form onSubmit={handleCreateFolder} className="mb-2 px-2">
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            placeholder="Folder Name"
+                                            value={newFolderName}
+                                            onChange={(e) => setNewFolderName(e.target.value)}
+                                            onBlur={() => !newFolderName && setIsCreating(false)}
+                                            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition-all"
+                                        />
+                                    </form>
+                                )}
+
+                                <div className="space-y-0.5">
+                                    {folders.map((folder) => (
+                                        <NavItem
+                                            key={folder.id}
+                                            href={`/?folderId=${folder.id}`}
+                                            icon={FolderIcon}
+                                            label={folder.name}
+                                            active={pathname.includes(`folderId=${folder.id}`)}
+                                            onDelete={() => handleDeleteFolder(folder.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </>
                         )}
-
-                        <div className="space-y-0.5">
-                            {folders.map((folder) => (
-                                <NavItem
-                                    key={folder.id}
-                                    href={`/?folderId=${folder.id}`}
-                                    icon={FolderIcon}
-                                    label={folder.name}
-                                    active={pathname.includes(`folderId=${folder.id}`)}
-                                    onDelete={() => handleDeleteFolder(folder.id)}
-                                />
-                            ))}
-                        </div>
                     </nav>
 
                     <div className="pt-6 border-t border-gray-100">
-                        <div className="flex items-center gap-3 px-3 py-2">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
-                                U
+                        {user ? (
+                            <div className="flex items-center justify-between px-3 py-2">
+                                <div className="flex items-center gap-3">
+                                    {user.photoURL ? (
+                                        <img src={user.photoURL} alt={user.displayName || "User"} className="w-8 h-8 rounded-full" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
+                                            {user.displayName ? user.displayName[0] : "U"}
+                                        </div>
+                                    )}
+                                    <div className="text-sm font-medium text-gray-700 truncate max-w-[100px]">
+                                        {user.displayName}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={signOut}
+                                    className="text-gray-400 hover:text-red-600 transition-colors"
+                                    title="Sign Out"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                </button>
                             </div>
-                            <div className="text-sm font-medium text-gray-700">User Account</div>
-                        </div>
+                        ) : (
+                            <button
+                                onClick={signInWithGoogle}
+                                className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-sm"
+                            >
+                                <UserIcon className="w-4 h-4" />
+                                Sign In
+                            </button>
+                        )}
                     </div>
                 </div>
             </aside>

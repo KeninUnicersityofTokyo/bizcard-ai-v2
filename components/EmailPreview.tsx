@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Send, Copy, Check, Save } from "lucide-react";
+import { Send, Copy, Check, Save, Loader2 } from "lucide-react";
 import { Folder } from "@/types";
-import { getFolders } from "@/lib/storage";
+import { useAuth } from "@/context/AuthContext";
+import { getFolders } from "@/lib/db";
 
 interface EmailData {
     email: string;
@@ -14,18 +15,24 @@ interface EmailData {
 
 interface EmailPreviewProps {
     initialData: EmailData;
-    onSave: (data: EmailData, folderId: string) => void;
+    onSave: (data: EmailData, folderId: string) => Promise<boolean>;
+    onSaveSuccess: (folderId: string) => void;
 }
 
-export default function EmailPreview({ initialData, onSave }: EmailPreviewProps) {
+export default function EmailPreview({ initialData, onSave, onSaveSuccess }: EmailPreviewProps) {
+    const { user } = useAuth();
     const [data, setData] = useState(initialData);
     const [copied, setCopied] = useState(false);
     const [folders, setFolders] = useState<Folder[]>([]);
     const [selectedFolderId, setSelectedFolderId] = useState("inbox");
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
     useEffect(() => {
-        setFolders(getFolders());
-    }, []);
+        if (user) {
+            getFolders(user.uid).then(setFolders);
+        }
+    }, [user]);
 
     const handleChange = (field: keyof EmailData, value: string) => {
         setData((prev) => ({ ...prev, [field]: value }));
@@ -42,6 +49,21 @@ export default function EmailPreview({ initialData, onSave }: EmailPreviewProps)
         const subject = encodeURIComponent(data.subject);
         const body = encodeURIComponent(data.body);
         window.location.href = `mailto:${data.email}?subject=${subject}&body=${body}`;
+    };
+
+    const handleSaveClick = async () => {
+        setIsSaving(true);
+        try {
+            const success = await onSave(data, selectedFolderId);
+            if (success) {
+                setIsSuccess(true);
+                setTimeout(() => {
+                    onSaveSuccess(selectedFolderId);
+                }, 1000);
+            }
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -116,11 +138,24 @@ export default function EmailPreview({ initialData, onSave }: EmailPreviewProps)
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => onSave(data, selectedFolderId)}
-                        className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors"
+                        onClick={handleSaveClick}
+                        disabled={isSaving || isSuccess}
+                        className={`p-2 rounded-full transition-all duration-300 flex items-center gap-2 ${isSuccess
+                            ? "bg-green-100 text-green-700 px-4"
+                            : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
+                            } disabled:opacity-100`}
                         title="Save Draft"
                     >
-                        <Save className="w-5 h-5" />
+                        {isSaving ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : isSuccess ? (
+                            <>
+                                <Check className="w-5 h-5" />
+                                <span className="text-sm font-bold">Saved!</span>
+                            </>
+                        ) : (
+                            <Save className="w-5 h-5" />
+                        )}
                     </button>
                     <button
                         onClick={handleCopy}

@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 import Sidebar from "@/components/Sidebar";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({
     children,
@@ -21,12 +22,14 @@ export default function RootLayout({
             <body
                 className={`${inter.className} antialiased bg-white text-gray-900`}
             >
-                <div className="flex min-h-screen">
-                    <Sidebar />
-                    <main className="flex-1 p-4 md:p-8 overflow-y-auto lg:ml-72">
-                        {children}
-                    </main>
-                </div>
+                <AuthProvider>
+                    <div className="flex min-h-screen">
+                        <Sidebar />
+                        <main className="flex-1 p-4 md:p-8 overflow-y-auto lg:ml-72">
+                            {children}
+                        </main>
+                    </div>
+                </AuthProvider>
             </body>
         </html>
     );

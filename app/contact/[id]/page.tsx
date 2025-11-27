@@ -5,33 +5,48 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Mail, Building, User, Calendar, Trash2, Send, Folder as FolderIcon } from "lucide-react";
 import { Contact, Folder } from "@/types";
-import { getContacts, deleteContact, updateContact, getFolders } from "@/lib/storage";
+import { useAuth } from "@/context/AuthContext";
+import { getContact, deleteContact, updateContact, getFolders, getContactImage } from "@/lib/db";
 
 export default function ContactDetailPage({ params }: { params: { id: string } }) {
     const router = useRouter();
+    const { user } = useAuth();
     const [contact, setContact] = useState<Contact | null>(null);
     const [folders, setFolders] = useState<Folder[]>([]);
+    const [image, setImage] = useState<string | null>(null);
 
     useEffect(() => {
-        const contacts = getContacts();
-        const found = contacts.find((c) => c.id === params.id);
-        if (found) {
-            setContact(found);
-        } else {
-            router.push("/");
-        }
-        setFolders(getFolders());
-    }, [params.id, router]);
+        if (!user) return;
 
-    const handleDelete = () => {
+        getContact(user.uid, params.id).then((found) => {
+            if (found) {
+                setContact(found);
+                // If legacy data has image, use it. Otherwise fetch from subcollection.
+                if (found.imageBase64) {
+                    setImage(found.imageBase64);
+                } else {
+                    getContactImage(user.uid, params.id).then(img => {
+                        if (img) setImage(img);
+                    });
+                }
+            } else {
+                router.push("/");
+            }
+        });
+        getFolders(user.uid).then(setFolders);
+    }, [params.id, router, user]);
+
+    const handleDelete = async () => {
+        if (!user) return;
         if (confirm("Are you sure you want to delete this contact?")) {
-            deleteContact(params.id);
+            await deleteContact(user.uid, params.id);
             router.push("/");
         }
     };
 
-    const handleMoveFolder = (folderId: string) => {
-        updateContact(params.id, { folderId });
+    const handleMoveFolder = async (folderId: string) => {
+        if (!user) return;
+        await updateContact(user.uid, params.id, { folderId });
         setContact((prev: Contact | null) => prev ? { ...prev, folderId } : null);
     };
 
@@ -144,14 +159,17 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
 
                 {/* Sidebar Info (Image & Context) */}
                 <div className="space-y-8">
-                    {contact.imageBase64 && (
+                    {image ? (
                         <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm p-2">
                             <img
-                                src={contact.imageBase64}
+                                src={image}
                                 alt="Business Card"
                                 className="w-full h-auto object-cover rounded-xl"
                             />
                         </div>
+                    ) : (
+                        // Placeholder or skeleton if needed, but keeping it clean for now
+                        null
                     )}
 
                     <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">

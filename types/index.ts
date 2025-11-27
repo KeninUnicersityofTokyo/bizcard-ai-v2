@@ -11,7 +11,7 @@ export interface Contact {
     company: string;
     email: string;
     context: string; // Voice note transcript
-    imageBase64?: string; // Optional, as manual input might not have it
+    imageBase64?: string | null; // Optional, as manual input might not have it
     generatedEmail: {
         subject: string;
         body: string;

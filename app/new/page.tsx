@@ -6,12 +6,15 @@ import ImageUploader from "@/components/ImageUploader";
 import VoiceInput from "@/components/VoiceInput";
 import EmailPreview from "@/components/EmailPreview";
 import { generateEmail } from "@/actions/generateEmail";
-import { saveContact } from "@/lib/storage";
+import { useAuth } from "@/context/AuthContext";
+import { saveContact } from "@/lib/db";
+
 import { Loader2, Sparkles, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function NewContactPage() {
     const router = useRouter();
+    const { user } = useAuth();
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [image, setImage] = useState<string | null>(null);
     const [context, setContext] = useState("");
@@ -59,25 +62,52 @@ export default function NewContactPage() {
         }
     };
 
-    const handleSave = (emailData: any, folderId: string) => {
+    const handleSave = async (emailData: any, folderId: string): Promise<boolean> => {
+        if (!user) {
+            alert("ログインが必要です。");
+            return false;
+        }
+
+        // Check image size (Firestore limit is 1MB)
+        let imageToSave = image;
+        if (image && image.length > 1000000) {
+            const confirmSave = confirm("画像サイズが大きすぎるため、保存に時間がかかるか、失敗する可能性があります。\n画像なしで保存しますか？");
+            if (confirmSave) {
+                imageToSave = null;
+            } else {
+                return false;
+            }
+        }
+
         try {
-            saveContact({
+            // Fire and forget - don't await the result for UI responsiveness
+            saveContact(user.uid, {
                 folderId,
                 name: emailData.name,
-                company: isManualMode ? manualDetails.company : "Unknown", // AI might extract company, but for now we rely on manual or just generic
+                company: isManualMode ? manualDetails.company : "Unknown",
                 email: emailData.email,
                 context,
-                imageBase64: image || undefined,
+                imageBase64: imageToSave || null,
                 generatedEmail: {
                     subject: emailData.subject,
                     body: emailData.body,
                 },
+            }).catch(e => {
+                console.error("Background save failed:", e);
+                // Note: We can't easily alert the user here since they might have navigated away.
+                // In a production app, we would use a global toast or notification system.
             });
-            router.push(`/?folderId=${folderId}`);
-        } catch (e) {
+
+            return true;
+        } catch (e: any) {
             console.error(e);
-            alert("保存に失敗しました。");
+            alert(`保存処理の開始に失敗しました: ${e.message}`);
+            return false;
         }
+    };
+
+    const handleSaveSuccess = (folderId: string) => {
+        router.push(`/?folderId=${folderId}`);
     };
 
     return (
@@ -238,7 +268,11 @@ export default function NewContactPage() {
                             <span className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md">3</span>
                             <span className="text-xl font-bold text-gray-900">Review & Save</span>
                         </div>
-                        <EmailPreview initialData={generatedEmail} onSave={handleSave} />
+                        <EmailPreview
+                            initialData={generatedEmail}
+                            onSave={handleSave}
+                            onSaveSuccess={handleSaveSuccess}
+                        />
 
                         <button
                             onClick={() => {

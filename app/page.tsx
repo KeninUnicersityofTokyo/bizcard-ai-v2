@@ -5,27 +5,54 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus, Search, Mail, User, Building, Loader2 } from "lucide-react";
 import { Contact } from "@/types";
-import { getContacts, getContactsByFolder } from "@/lib/storage";
+import { useAuth } from "@/context/AuthContext";
+import { subscribeToContacts, subscribeToContactsByFolder } from "@/lib/db";
 
 function DashboardContent() {
     const searchParams = useSearchParams();
     const folderId = searchParams.get("folderId");
+    const { user, loading } = useAuth();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
+        if (loading || !user) return;
+
+        let unsubscribe: () => void;
+
         if (folderId) {
-            setContacts(getContactsByFolder(folderId));
+            unsubscribe = subscribeToContactsByFolder(user.uid, folderId, setContacts);
         } else {
-            setContacts(getContacts());
+            unsubscribe = subscribeToContacts(user.uid, setContacts);
         }
-    }, [folderId]);
+
+        return () => unsubscribe();
+    }, [user, loading, folderId]);
 
     const filteredContacts = contacts.filter(
         (c) =>
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.company.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) {
+        return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-gray-400" /></div>;
+    }
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                    <User className="w-10 h-10 text-gray-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to BizCard AI</h2>
+                <p className="text-gray-500 max-w-md mb-8">
+                    Sign in to start managing your business cards and generating instant email replies.
+                </p>
+                {/* Sign in button is in Sidebar, but we could add one here too if needed */}
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto">
