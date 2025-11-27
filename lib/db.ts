@@ -210,6 +210,8 @@ export const subscribeToContacts = (userId: string, callback: (contacts: Contact
         contacts.forEach(c => contactCache.set(c.id, c));
 
         callback(contacts);
+    }, (error) => {
+        console.error("Error in subscribeToContacts:", error);
     });
 };
 
@@ -229,5 +231,7 @@ export const subscribeToContactsByFolder = (userId: string, folderId: string, ca
         contacts.forEach(c => contactCache.set(c.id, c));
 
         callback(contacts);
+    }, (error) => {
+        console.error("Error in subscribeToContactsByFolder:", error);
     });
 };
