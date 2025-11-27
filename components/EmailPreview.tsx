@@ -1,4 +1,5 @@
-```javascript
+"use client";
+
 import { useState, useEffect } from "react";
 import { Send, Copy, Check, Save, Loader2, Mic, MicOff, Sparkles } from "lucide-react";
 import { Folder } from "@/types";
@@ -44,7 +45,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     };
 
     const handleCopy = () => {
-        const text = `宛先: ${ data.email } \n件名: ${ data.subject } \n\n${ data.body } `;
+        const text = `宛先: ${data.email} \n件名: ${data.subject} \n\n${data.body} `;
         navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -60,7 +61,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                 // Open Mailer
                 const subject = encodeURIComponent(data.subject);
                 const body = encodeURIComponent(data.body);
-                window.location.href = `mailto:${ data.email }?subject = ${ subject }& body=${ body } `;
+                window.location.href = `mailto:${data.email}?subject = ${subject}& body=${body} `;
 
                 // Navigate (via onSaveSuccess)
                 setTimeout(() => {
@@ -132,19 +133,18 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         className="w-full h-72 py-4 bg-transparent outline-none text-gray-800 text-sm leading-relaxed resize-none"
                         placeholder="Write your message..."
                     />
-                    
+
                     {/* AI Refinement Button */}
                     <div className="absolute bottom-4 right-4 z-10">
                         <button
                             onClick={toggleRecording}
                             disabled={isRefining}
-                            className={`flex items - center gap - 2 px - 4 py - 2 rounded - full shadow - lg transition - all ${
-    isRecording
-        ? "bg-red-500 text-white animate-pulse"
-        : isRefining
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-black text-white hover:bg-gray-800"
-} `}
+                            className={`flex items - center gap - 2 px - 4 py - 2 rounded - full shadow - lg transition - all ${isRecording
+                                    ? "bg-red-500 text-white animate-pulse"
+                                    : isRefining
+                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                        : "bg-black text-white hover:bg-gray-800"
+                                } `}
                         >
                             {isRefining ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -190,11 +190,10 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     <button
                         onClick={handleSaveClick}
                         disabled={isSaving || isSuccess}
-                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${
-    isSuccess
-        ? "bg-green-100 text-green-700 px-4"
-        : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
-} disabled: opacity - 100`}
+                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${isSuccess
+                                ? "bg-green-100 text-green-700 px-4"
+                                : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
+                            } disabled: opacity - 100`}
                         title="Save Draft"
                     >
                         {isSaving ? (
