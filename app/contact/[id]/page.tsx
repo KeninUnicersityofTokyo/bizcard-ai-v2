@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Building, User, Calendar, Trash2, Send, Folder as FolderIcon, Mic, MicOff, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Building, User, Calendar, Trash2, Send, Folder as FolderIcon, Mic, MicOff, Sparkles, Loader2, Pencil } from "lucide-react";
 import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { getContact, deleteContact, updateContact, getFolders, getContactImage } from "@/lib/db";
@@ -148,8 +148,9 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                             <button
                                 onClick={() => setIsEditing(true)}
                                 className="p-2.5 text-gray-400 hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-colors"
+                                title="Edit"
                             >
-                                <FolderIcon className="w-5 h-5" /> {/* Reusing icon for edit temporarily or import Edit */}
+                                <Pencil className="w-5 h-5" />
                             </button>
                             <button
                                 onClick={handleDelete}
@@ -276,10 +277,10 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                                                 onClick={toggleRecording}
                                                 disabled={isRefining}
                                                 className={`flex items-center gap-3 px-6 py-3 rounded-full shadow-lg transition-all duration-300 backdrop-blur-md border border-white/20 ${isRecording
-                                                        ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
-                                                        : isRefining
-                                                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                                            : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
+                                                    ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
+                                                    : isRefining
+                                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                        : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
                                                     }`}
                                             >
                                                 {isRefining ? (
