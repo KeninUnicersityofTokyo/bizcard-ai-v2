@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -24,7 +25,9 @@ export default function RootLayout({
             >
                 <AuthProvider>
                     <div className="flex min-h-screen">
-                        <Sidebar />
+                        <Suspense fallback={<div className="w-72 bg-white border-r border-gray-100 hidden lg:block" />}>
+                            <Sidebar />
+                        </Suspense>
                         <main className="flex-1 p-4 md:p-8 overflow-y-auto lg:ml-72">
                             {children}
                         </main>
