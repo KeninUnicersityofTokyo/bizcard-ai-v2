@@ -257,33 +257,42 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Body</label>
                                 {isEditing ? (
-                                    <div className="relative">
+                                    <div className="relative group">
+                                        {/* Rainbow Border Effect */}
+                                        {isRecording && (
+                                            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-75 blur-sm animate-pulse"></div>
+                                        )}
+
                                         <textarea
                                             value={editForm.body}
                                             onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
                                             rows={10}
-                                            className="w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm leading-relaxed focus:ring-2 focus:ring-black outline-none"
+                                            className={`relative w-full p-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm leading-relaxed focus:ring-2 focus:ring-black outline-none transition-all duration-300 ${isRecording ? "border-transparent ring-0" : ""
+                                                }`}
                                         />
                                         {/* AI Refinement Button */}
                                         <div className="absolute bottom-4 right-4 z-10">
                                             <button
                                                 onClick={toggleRecording}
                                                 disabled={isRefining}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg transition-all ${isRecording
-                                                    ? "bg-red-500 text-white animate-pulse"
-                                                    : isRefining
-                                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                                        : "bg-black text-white hover:bg-gray-800"
+                                                className={`flex items-center gap-3 px-6 py-3 rounded-full shadow-lg transition-all duration-300 backdrop-blur-md border border-white/20 ${isRecording
+                                                        ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
+                                                        : isRefining
+                                                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                            : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
                                                     }`}
                                             >
                                                 {isRefining ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
                                                 ) : isRecording ? (
-                                                    <MicOff className="w-4 h-4" />
+                                                    <div className="relative">
+                                                        <span className="absolute -inset-1 rounded-full bg-white/30 animate-ping"></span>
+                                                        <MicOff className="w-5 h-5 relative z-10" />
+                                                    </div>
                                                 ) : (
-                                                    <Sparkles className="w-4 h-4" />
+                                                    <Sparkles className="w-5 h-5 text-purple-500" />
                                                 )}
-                                                <span className="text-xs font-bold">
+                                                <span className="text-sm font-semibold tracking-wide">
                                                     {isRefining ? "Refining..." : isRecording ? "Listening..." : "AI Refine"}
                                                 </span>
                                             </button>

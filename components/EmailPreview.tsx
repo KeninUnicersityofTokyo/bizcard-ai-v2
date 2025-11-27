@@ -126,11 +126,17 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                 </div>
 
                 {/* Body */}
-                <div className="relative">
+                <div className="relative group">
+                    {/* Rainbow Border Effect */}
+                    {isRecording && (
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-75 blur-sm animate-pulse"></div>
+                    )}
+
                     <textarea
                         value={data.body}
                         onChange={(e) => handleChange("body", e.target.value)}
-                        className="w-full h-72 py-4 bg-transparent outline-none text-gray-800 text-sm leading-relaxed resize-none"
+                        className={`relative w-full h-72 py-4 px-4 bg-white outline-none text-gray-800 text-sm leading-relaxed resize-none rounded-xl transition-all duration-300 ${isRecording ? "bg-white" : "bg-transparent"
+                            }`}
                         placeholder="Write your message..."
                     />
 
@@ -139,21 +145,24 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         <button
                             onClick={toggleRecording}
                             disabled={isRefining}
-                            className={`flex items - center gap - 2 px - 4 py - 2 rounded - full shadow - lg transition - all ${isRecording
-                                    ? "bg-red-500 text-white animate-pulse"
+                            className={`flex items-center gap-3 px-6 py-3 rounded-full shadow-lg transition-all duration-300 backdrop-blur-md border border-white/20 ${isRecording
+                                    ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
                                     : isRefining
                                         ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                        : "bg-black text-white hover:bg-gray-800"
-                                } `}
+                                        : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
+                                }`}
                         >
                             {isRefining ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-5 h-5 animate-spin" />
                             ) : isRecording ? (
-                                <MicOff className="w-4 h-4" />
+                                <div className="relative">
+                                    <span className="absolute -inset-1 rounded-full bg-white/30 animate-ping"></span>
+                                    <MicOff className="w-5 h-5 relative z-10" />
+                                </div>
                             ) : (
-                                <Sparkles className="w-4 h-4" />
+                                <Sparkles className="w-5 h-5 text-purple-500" />
                             )}
-                            <span className="text-xs font-bold">
+                            <span className="text-sm font-semibold tracking-wide">
                                 {isRefining ? "Refining..." : isRecording ? "Listening..." : "AI Refine"}
                             </span>
                         </button>
@@ -191,8 +200,8 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         onClick={handleSaveClick}
                         disabled={isSaving || isSuccess}
                         className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${isSuccess
-                                ? "bg-green-100 text-green-700 px-4"
-                                : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
+                            ? "bg-green-100 text-green-700 px-4"
+                            : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
                             } disabled: opacity - 100`}
                         title="Save Draft"
                     >
