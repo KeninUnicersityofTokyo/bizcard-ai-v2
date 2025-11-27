@@ -14,16 +14,30 @@ function DashboardContent() {
     const { user, loading } = useAuth();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [isFetching, setIsFetching] = useState(true);
 
     useEffect(() => {
-        if (loading || !user) return;
+        if (loading) return;
+        if (!user) {
+            setIsFetching(false);
+            return;
+        }
+
+        console.log("Subscribing to contacts for user:", user.uid);
+        setIsFetching(true);
 
         let unsubscribe: () => void;
 
+        const handleUpdate = (data: Contact[]) => {
+            console.log("Contacts update received:", data.length);
+            setContacts(data);
+            setIsFetching(false);
+        };
+
         if (folderId) {
-            unsubscribe = subscribeToContactsByFolder(user.uid, folderId, setContacts);
+            unsubscribe = subscribeToContactsByFolder(user.uid, folderId, handleUpdate);
         } else {
-            unsubscribe = subscribeToContacts(user.uid, setContacts);
+            unsubscribe = subscribeToContacts(user.uid, handleUpdate);
         }
 
         return () => unsubscribe();
@@ -36,7 +50,11 @@ function DashboardContent() {
     );
 
     if (loading) {
-        return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-gray-400" /></div>;
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+        );
     }
 
     if (!user) {
@@ -49,7 +67,6 @@ function DashboardContent() {
                 <p className="text-gray-500 max-w-md mb-8">
                     Sign in to start managing your business cards and generating instant email replies.
                 </p>
-                {/* Sign in button is in Sidebar, but we could add one here too if needed */}
             </div>
         );
     }
@@ -82,48 +99,56 @@ function DashboardContent() {
             </div>
 
             {/* Contact List */}
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {filteredContacts.length === 0 ? (
-                    <div className="col-span-full text-center py-20">
-                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <User className="w-8 h-8 text-gray-300" />
+            {isFetching ? (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
+                    ))}
+                </div>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {filteredContacts.length === 0 ? (
+                        <div className="col-span-full text-center py-20">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <User className="w-8 h-8 text-gray-300" />
+                            </div>
+                            <p className="text-gray-500 font-medium">No contacts found</p>
                         </div>
-                        <p className="text-gray-500 font-medium">No contacts found</p>
-                    </div>
-                ) : (
-                    filteredContacts.map((contact) => (
-                        <Link
-                            key={contact.id}
-                            href={`/contact/${contact.id}`}
-                            className="block p-6 bg-white border border-gray-100 rounded-2xl hover:border-gray-300 hover:shadow-lg transition-all duration-300 group"
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-2 text-gray-500 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
-                                    <Building className="w-3.5 h-3.5" />
-                                    <span>{contact.company}</span>
+                    ) : (
+                        filteredContacts.map((contact) => (
+                            <Link
+                                key={contact.id}
+                                href={`/contact/${contact.id}`}
+                                className="block p-6 bg-white border border-gray-100 rounded-2xl hover:border-gray-300 hover:shadow-lg transition-all duration-300 group"
+                            >
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
+                                        <Building className="w-3.5 h-3.5" />
+                                        <span>{contact.company}</span>
+                                    </div>
+                                    <span className="text-xs text-gray-400 font-medium">
+                                        {new Date(contact.createdAt).toLocaleDateString()}
+                                    </span>
                                 </div>
-                                <span className="text-xs text-gray-400 font-medium">
-                                    {new Date(contact.createdAt).toLocaleDateString()}
-                                </span>
-                            </div>
 
-                            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                                {contact.name}
-                            </h3>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                                    {contact.name}
+                                </h3>
 
-                            <div className="text-sm text-gray-500 flex items-center gap-2 mb-6">
-                                <Mail className="w-4 h-4 text-gray-400" />
-                                {contact.email}
-                            </div>
+                                <div className="text-sm text-gray-500 flex items-center gap-2 mb-6">
+                                    <Mail className="w-4 h-4 text-gray-400" />
+                                    {contact.email}
+                                </div>
 
-                            <div className="text-xs text-gray-600 line-clamp-2 bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed">
-                                <span className="font-semibold text-gray-900 block mb-1">Subject:</span>
-                                {contact.generatedEmail.subject}
-                            </div>
-                        </Link>
-                    ))
-                )}
-            </div>
+                                <div className="text-xs text-gray-600 line-clamp-2 bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed">
+                                    <span className="font-semibold text-gray-900 block mb-1">Subject:</span>
+                                    {contact.generatedEmail.subject}
+                                </div>
+                            </Link>
+                        ))
+                    )}
+                </div>
+            )}
         </div>
     );
 }
