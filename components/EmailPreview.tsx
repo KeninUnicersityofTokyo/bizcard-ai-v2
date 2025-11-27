@@ -1,10 +1,12 @@
+```javascript
 "use client";
 
-import { useState, useEffect } from "react";
-import { Send, Copy, Check, Save, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Send, Copy, Check, Save, Loader2, Mic, MicOff, Sparkles } from "lucide-react";
 import { Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { getFolders } from "@/lib/db";
+import { refineEmail } from "@/actions/refineEmail";
 
 interface EmailData {
     email: string;
@@ -28,18 +30,84 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
+    // AI Refinement State
+    const [isRecording, setIsRecording] = useState(false);
+    const [isRefining, setIsRefining] = useState(false);
+    const recognitionRef = useRef<any>(null);
+
     useEffect(() => {
         if (user) {
             getFolders(user.uid).then(setFolders);
         }
     }, [user]);
 
+    // Initialize Speech Recognition
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const SpeechRecognition =
+                (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+            if (SpeechRecognition) {
+                recognitionRef.current = new SpeechRecognition();
+                recognitionRef.current.continuous = false; // Stop after one sentence/command
+                recognitionRef.current.interimResults = false;
+                recognitionRef.current.lang = "ja-JP";
+
+                recognitionRef.current.onresult = async (event: any) => {
+                    const transcript = event.results[0][0].transcript;
+                    console.log("Voice Command:", transcript);
+                    setIsRecording(false);
+                    await handleRefine(transcript);
+                };
+
+                recognitionRef.current.onerror = (event: any) => {
+                    console.error("Speech recognition error", event.error);
+                    setIsRecording(false);
+                };
+
+                recognitionRef.current.onend = () => {
+                    setIsRecording(false);
+                };
+            }
+        }
+    }, [data.body]); // Re-bind if needed, though data.body is used in handleRefine
+
+    const handleRefine = async (instruction: string) => {
+        if (!instruction) return;
+        setIsRefining(true);
+        try {
+            const result = await refineEmail(data.body, instruction);
+            if (result && result.body) {
+                setData(prev => ({ ...prev, body: result.body }));
+            }
+        } catch (error) {
+            console.error("Refinement failed:", error);
+            alert("AI修正に失敗しました。");
+        } finally {
+            setIsRefining(false);
+        }
+    };
+
+    const toggleRecording = () => {
+        if (!recognitionRef.current) {
+            alert("このブラウザは音声認識をサポートしていません。");
+            return;
+        }
+
+        if (isRecording) {
+            recognitionRef.current.stop();
+        } else {
+            recognitionRef.current.start();
+            setIsRecording(true);
+        }
+    };
+
     const handleChange = (field: keyof EmailData, value: string) => {
         setData((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleCopy = () => {
-        const text = `宛先: ${data.email}\n件名: ${data.subject}\n\n${data.body}`;
+        const text = `宛先: ${ data.email } \n件名: ${ data.subject } \n\n${ data.body } `;
         navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -55,7 +123,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                 // Open Mailer
                 const subject = encodeURIComponent(data.subject);
                 const body = encodeURIComponent(data.body);
-                window.location.href = `mailto:${data.email}?subject=${subject}&body=${body}`;
+                window.location.href = `mailto:${ data.email }?subject = ${ subject }& body=${ body } `;
 
                 // Navigate (via onSaveSuccess)
                 setTimeout(() => {
@@ -120,12 +188,40 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                 </div>
 
                 {/* Body */}
-                <textarea
-                    value={data.body}
-                    onChange={(e) => handleChange("body", e.target.value)}
-                    className="w-full h-72 py-4 bg-transparent outline-none text-gray-800 text-sm leading-relaxed resize-none"
-                    placeholder="Write your message..."
-                />
+                <div className="relative">
+                    <textarea
+                        value={data.body}
+                        onChange={(e) => handleChange("body", e.target.value)}
+                        className="w-full h-72 py-4 bg-transparent outline-none text-gray-800 text-sm leading-relaxed resize-none"
+                        placeholder="Write your message..."
+                    />
+                    
+                    {/* AI Refinement Button */}
+                    <div className="absolute bottom-4 right-4 z-10">
+                        <button
+                            onClick={toggleRecording}
+                            disabled={isRefining}
+                            className={`flex items - center gap - 2 px - 4 py - 2 rounded - full shadow - lg transition - all ${
+    isRecording
+        ? "bg-red-500 text-white animate-pulse"
+        : isRefining
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-black text-white hover:bg-gray-800"
+} `}
+                        >
+                            {isRefining ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : isRecording ? (
+                                <MicOff className="w-4 h-4" />
+                            ) : (
+                                <Sparkles className="w-4 h-4" />
+                            )}
+                            <span className="text-xs font-bold">
+                                {isRefining ? "Refining..." : isRecording ? "Listening..." : "AI Refine"}
+                            </span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Footer Actions */}
@@ -157,10 +253,11 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     <button
                         onClick={handleSaveClick}
                         disabled={isSaving || isSuccess}
-                        className={`p-2 rounded-full transition-all duration-300 flex items-center gap-2 ${isSuccess
-                            ? "bg-green-100 text-green-700 px-4"
-                            : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
-                            } disabled:opacity-100`}
+                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${
+    isSuccess
+        ? "bg-green-100 text-green-700 px-4"
+        : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
+} disabled: opacity - 100`}
                         title="Save Draft"
                     >
                         {isSaving ? (
