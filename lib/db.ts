@@ -129,39 +129,47 @@ export const getContact = async (userId: string, contactId: string): Promise<Con
 };
 
 export const saveContact = async (userId: string, contact: Omit<Contact, "id" | "createdAt">): Promise<Contact> => {
+    console.log("saveContact called for user:", userId);
     // Separate image from main data to improve performance
     const { imageBase64, ...mainData } = contact;
 
     const data = {
         ...mainData,
-        // We don't store imageBase64 in the main doc anymore for new contacts
-        // But we keep the field in type definition for backward compatibility
         createdAt: Date.now(),
     };
 
-    const docRef = await addDoc(collection(db, `users/${userId}/contacts`), data);
+    console.log("Attempting to addDoc to contacts collection...");
+    try {
+        const docRef = await addDoc(collection(db, `users/${userId}/contacts`), data);
+        console.log("addDoc successful, ID:", docRef.id);
 
-    // If there is an image, save it to a subcollection
-    if (imageBase64) {
-        try {
-            await setDoc(doc(db, `users/${userId}/contacts/${docRef.id}/private/image`), {
-                base64: imageBase64
-            });
-        } catch (e) {
-            console.error("Failed to save image to subcollection", e);
+        // If there is an image, save it to a subcollection
+        if (imageBase64) {
+            console.log("Attempting to save image to subcollection...");
+            try {
+                await setDoc(doc(db, `users/${userId}/contacts/${docRef.id}/private/image`), {
+                    base64: imageBase64
+                });
+                console.log("Image saved successfully");
+            } catch (e) {
+                console.error("Failed to save image to subcollection", e);
+            }
         }
+
+        const newContact = {
+            id: docRef.id,
+            ...data,
+            imageBase64: imageBase64
+        };
+
+        // Update cache
+        contactCache.set(newContact.id, newContact);
+
+        return newContact;
+    } catch (error) {
+        console.error("Error in addDoc:", error);
+        throw error;
     }
-
-    const newContact = {
-        id: docRef.id,
-        ...data,
-        imageBase64: imageBase64 // Return it so UI can use it immediately
-    };
-
-    // Update cache
-    contactCache.set(newContact.id, newContact);
-
-    return newContact;
 };
 
 export const getContactImage = async (userId: string, contactId: string): Promise<string | null> => {

@@ -13,6 +13,13 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Debug: Check for missing config
+Object.entries(firebaseConfig).forEach(([key, value]) => {
+    if (!value) {
+        console.error(`Missing Firebase Config: ${key}`);
+    }
+});
+
 // Initialize Firebase (Server-Side Safe)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
