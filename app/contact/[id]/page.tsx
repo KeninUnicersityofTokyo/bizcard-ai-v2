@@ -76,8 +76,10 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
         const body = encodeURIComponent(contact.generatedEmail.body);
         window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}`;
 
-        // Navigate to Sent folder
-        router.push("/?folderId=sent");
+        // Navigate to Sent folder with a slight delay to allow mailer to open
+        setTimeout(() => {
+            router.push("/?folderId=sent");
+        }, 500);
     };
 
     const handleSaveEdit = async () => {

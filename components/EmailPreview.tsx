@@ -45,10 +45,27 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleOpenMailer = () => {
-        const subject = encodeURIComponent(data.subject);
-        const body = encodeURIComponent(data.body);
-        window.location.href = `mailto:${data.email}?subject=${subject}&body=${body}`;
+    const handleOpenMailer = async () => {
+        setIsSaving(true);
+        try {
+            // Save to Sent folder first
+            const success = await onSave(data, "sent");
+
+            if (success) {
+                // Open Mailer
+                const subject = encodeURIComponent(data.subject);
+                const body = encodeURIComponent(data.body);
+                window.location.href = `mailto:${data.email}?subject=${subject}&body=${body}`;
+
+                // Navigate (via onSaveSuccess)
+                setTimeout(() => {
+                    onSaveSuccess("sent");
+                }, 500); // Small delay to ensure mailer opens
+            }
+        } catch (error) {
+            console.error("Failed to send:", error);
+            setIsSaving(false);
+        }
     };
 
     const handleSaveClick = async () => {
