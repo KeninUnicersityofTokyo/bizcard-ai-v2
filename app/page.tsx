@@ -23,13 +23,9 @@ function DashboardContent() {
             return;
         }
 
-        console.log("Subscribing to contacts for user:", user.uid);
-        setIsFetching(true);
-
         let unsubscribe: () => void;
 
         const handleUpdate = (data: Contact[]) => {
-            console.log("Contacts update received:", data.length);
             setContacts(data);
             setIsFetching(false);
         };

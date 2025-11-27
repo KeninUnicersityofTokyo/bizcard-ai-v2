@@ -10,20 +10,10 @@ const firebaseConfig = {
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-};
+    // Initialize Firebase (Server-Side Safe)
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-// Debug: Check for missing config
-Object.entries(firebaseConfig).forEach(([key, value]) => {
-    if (!value) {
-        console.error(`Missing Firebase Config: ${key}`);
-    }
-});
-
-// Initialize Firebase (Server-Side Safe)
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-export { app, auth, db, storage };
+    export { app, auth, db, storage };

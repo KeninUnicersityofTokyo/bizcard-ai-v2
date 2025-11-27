@@ -80,8 +80,8 @@ export default function NewContactPage() {
         }
 
         try {
-            // Revert to await for debugging
-            await saveContact(user.uid, {
+            // Fire and forget - don't await the result for UI responsiveness
+            saveContact(user.uid, {
                 folderId,
                 name: emailData.name,
                 company: isManualMode ? manualDetails.company : "Unknown",
@@ -92,12 +92,14 @@ export default function NewContactPage() {
                     subject: emailData.subject,
                     body: emailData.body,
                 },
+            }).catch(e => {
+                console.error("Background save failed:", e);
             });
 
             return true;
         } catch (e: any) {
-            console.error("Save failed:", e);
-            alert(`保存エラー (Debug): ${e.message}`);
+            console.error(e);
+            alert(`保存処理の開始に失敗しました: ${e.message}`);
             return false;
         }
     };
