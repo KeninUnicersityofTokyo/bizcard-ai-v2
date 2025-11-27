@@ -24,7 +24,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     const [data, setData] = useState(initialData);
     const [copied, setCopied] = useState(false);
     const [folders, setFolders] = useState<Folder[]>([]);
-    const [selectedFolderId, setSelectedFolderId] = useState("inbox");
+    const [selectedFolderId, setSelectedFolderId] = useState("drafts");
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
@@ -127,7 +127,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         onChange={(e) => setSelectedFolderId(e.target.value)}
                         className="p-2 bg-transparent text-sm text-gray-600 font-medium outline-none cursor-pointer hover:text-gray-900"
                     >
-                        <option value="inbox">Inbox</option>
+                        <option value="drafts">Drafts</option>
                         {folders.map((f) => (
                             <option key={f.id} value={f.id}>
                                 {f.name}
