@@ -15,6 +15,8 @@ export interface Contact {
     generatedEmail: {
         subject: string;
         body: string;
+        cc?: string;
+        bcc?: string;
     };
     createdAt: number;
 }

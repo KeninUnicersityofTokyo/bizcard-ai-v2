@@ -233,3 +233,28 @@ export const subscribeToContactsByFolder = (userId: string, folderId: string, ca
         console.error("Error in subscribeToContactsByFolder:", error);
     });
 };
+
+// --- Settings (Signature) ---
+
+export const getSignature = async (userId: string): Promise<string> => {
+    try {
+        const docRef = doc(db, `users/${userId}/settings/signature`);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data().text || "";
+        }
+    } catch (e) {
+        console.error("Error fetching signature:", e);
+    }
+    return "";
+};
+
+export const saveSignature = async (userId: string, text: string) => {
+    try {
+        const docRef = doc(db, `users/${userId}/settings/signature`);
+        await setDoc(docRef, { text }, { merge: true });
+    } catch (e) {
+        console.error("Error saving signature:", e);
+        throw e;
+    }
+};

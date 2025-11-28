@@ -1,14 +1,17 @@
+```javascript
 "use client";
 
 import { useState, useEffect } from "react";
 import { Send, Copy, Check, Save, Loader2, Mic, MicOff, Sparkles } from "lucide-react";
 import { Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { getFolders } from "@/lib/db";
+import { getFolders, getSignature } from "@/lib/db";
 import { useAiRefine } from "@/hooks/useAiRefine";
 
 interface EmailData {
     email: string;
+    cc?: string;
+    bcc?: string;
     name: string;
     subject: string;
     body: string;
@@ -28,6 +31,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     const [selectedFolderId, setSelectedFolderId] = useState("drafts");
     const [isSaving, setIsSaving] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [showCcBcc, setShowCcBcc] = useState(false);
 
     const { isRecording, isRefining, toggleRecording } = useAiRefine(
         data.body,
@@ -37,15 +41,24 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     useEffect(() => {
         if (user) {
             getFolders(user.uid).then(setFolders);
+            // Fetch and append signature if body doesn't already have it
+            getSignature(user.uid).then(sig => {
+                if (sig && !data.body.includes(sig)) {
+                    setData(prev => ({
+                        ...prev,
+                        body: prev.body + "\n\n" + sig
+                    }));
+                }
+            });
         }
-    }, [user]);
+    }, [user]); // Only run on mount/user change
 
     const handleChange = (field: keyof EmailData, value: string) => {
         setData((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleCopy = () => {
-        const text = `宛先: ${data.email} \n件名: ${data.subject} \n\n${data.body} `;
+        const text = `宛先: ${ data.email } \nCC: ${ data.cc || "" } \nBCC: ${ data.bcc || "" } \n件名: ${ data.subject } \n\n${ data.body } `;
         navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -61,12 +74,15 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                 // Open Mailer
                 const subject = encodeURIComponent(data.subject);
                 const body = encodeURIComponent(data.body);
-                window.location.href = `mailto:${data.email}?subject = ${subject}& body=${body} `;
+                const cc = data.cc ? `& cc=${ encodeURIComponent(data.cc) } ` : "";
+                const bcc = data.bcc ? `& bcc=${ encodeURIComponent(data.bcc) } ` : "";
+
+                window.location.href = `mailto:${ data.email }?subject = ${ subject }& body=${ body }${ cc }${ bcc } `;
 
                 // Navigate (via onSaveSuccess)
                 setTimeout(() => {
                     onSaveSuccess("sent");
-                }, 500); // Small delay to ensure mailer opens
+                }, 500);
             }
         } catch (error) {
             console.error("Failed to send:", error);
@@ -111,7 +127,39 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         className="flex-1 bg-transparent outline-none text-gray-900 text-sm"
                         placeholder="recipient@example.com"
                     />
+                    <button
+                        onClick={() => setShowCcBcc(!showCcBcc)}
+                        className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2"
+                    >
+                        CC/BCC
+                    </button>
                 </div>
+
+                {/* CC/BCC */}
+                {showCcBcc && (
+                    <>
+                        <div className="flex items-center border-b border-gray-100 pb-2 animate-in slide-in-from-top-2 duration-200">
+                            <span className="text-gray-400 text-sm w-16 font-medium">Cc</span>
+                            <input
+                                type="text"
+                                value={data.cc || ""}
+                                onChange={(e) => handleChange("cc", e.target.value)}
+                                className="flex-1 bg-transparent outline-none text-gray-900 text-sm"
+                                placeholder="cc@example.com"
+                            />
+                        </div>
+                        <div className="flex items-center border-b border-gray-100 pb-2 animate-in slide-in-from-top-2 duration-200">
+                            <span className="text-gray-400 text-sm w-16 font-medium">Bcc</span>
+                            <input
+                                type="text"
+                                value={data.bcc || ""}
+                                onChange={(e) => handleChange("bcc", e.target.value)}
+                                className="flex-1 bg-transparent outline-none text-gray-900 text-sm"
+                                placeholder="bcc@example.com"
+                            />
+                        </div>
+                    </>
+                )}
 
                 {/* Subject */}
                 <div className="flex items-center border-b border-gray-100 pb-2">
@@ -135,8 +183,9 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     <textarea
                         value={data.body}
                         onChange={(e) => handleChange("body", e.target.value)}
-                        className={`relative w-full h-72 py-4 px-4 bg-white outline-none text-gray-800 text-sm leading-relaxed resize-none rounded-xl transition-all duration-300 ${isRecording ? "bg-white" : "bg-transparent"
-                            }`}
+                        className={`relative w - full h - 72 py - 4 px - 4 bg - white outline - none text - gray - 800 text - sm leading - relaxed resize - none rounded - xl transition - all duration - 300 ${
+    isRecording ? "bg-white" : "bg-transparent"
+} `}
                         placeholder="Write your message..."
                     />
 
@@ -145,12 +194,13 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         <button
                             onClick={toggleRecording}
                             disabled={isRefining}
-                            className={`flex items-center gap-3 px-6 py-3 rounded-full shadow-lg transition-all duration-300 backdrop-blur-md border border-white/20 ${isRecording
-                                    ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
-                                    : isRefining
-                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                        : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
-                                }`}
+                            className={`flex items - center gap - 3 px - 6 py - 3 rounded - full shadow - lg transition - all duration - 300 backdrop - blur - md border border - white / 20 ${
+    isRecording
+        ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
+        : isRefining
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
+} `}
                         >
                             {isRefining ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -199,10 +249,11 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     <button
                         onClick={handleSaveClick}
                         disabled={isSaving || isSuccess}
-                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${isSuccess
-                            ? "bg-green-100 text-green-700 px-4"
-                            : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
-                            } disabled: opacity - 100`}
+                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${
+    isSuccess
+        ? "bg-green-100 text-green-700 px-4"
+        : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
+} disabled: opacity - 100`}
                         title="Save Draft"
                     >
                         {isSaving ? (

@@ -36,6 +36,7 @@ export default function Sidebar() {
             setFolders([...folders, newFolder]);
             setNewFolderName("");
             setIsCreating(false);
+            setIsCreatingFolder(false);
         } catch (error) {
             console.error("Error creating folder:", error);
         }
@@ -53,146 +54,134 @@ export default function Sidebar() {
         }
     };
 
-    const NavItem = ({ href, icon: Icon, label, active, onDelete }: any) => (
-        <Link
-            href={href}
-            className={`flex items-center justify-between p-3 rounded-xl mb-1 transition-all duration-200 ${active
-                ? "bg-gray-100 text-gray-900 font-semibold"
-                : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                }`}
-            onClick={() => setIsMobileOpen(false)}
-        >
-            <div className="flex items-center gap-3">
-                <Icon className={`w-5 h-5 ${active ? "text-gray-900" : "text-gray-400"}`} />
-                <span className="text-sm">{label}</span>
-            </div>
-            {onDelete && (
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onDelete();
-                    }}
-                    className="p-1.5 text-gray-400 hover:bg-gray-200 hover:text-red-600 rounded-lg transition-colors"
-                >
-                    <Trash2 className="w-4 h-4" />
-                </button>
-            )}
-        </Link>
-    );
-
     return (
         <>
-            {/* Mobile Toggle */}
+            {/* Mobile Menu Button */}
             <button
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
-                className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg text-gray-900 border border-gray-200 shadow-sm"
+                className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-white rounded-lg shadow-md"
             >
                 {isMobileOpen ? <X /> : <Menu />}
             </button>
 
-            {/* Sidebar Container */}
+            {/* Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-gray-100 transform transition-transform duration-300 lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
+                className={`fixed top-0 left-0 z-40 h-screen w-72 bg-gray-50 border-r border-gray-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
                     }`}
             >
-                <div className="p-6 h-full flex flex-col">
-                    <h1 className="text-xl font-bold text-gray-900 mb-10 flex items-center gap-3 tracking-tight">
-                        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white">
-                            <Inbox className="w-5 h-5" />
+                <div className="h-full flex flex-col p-6">
+                    {/* Logo */}
+                    <div className="mb-8">
+                        <h1 className="text-2xl font-bold tracking-tight">BizCard AI</h1>
+                    </div>
+
+                    {/* New Contact Button */}
+                    <Link
+                        href="/new"
+                        onClick={() => setIsMobileOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full bg-black text-white p-3 rounded-xl font-medium mb-8 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
+                    >
+                        <Plus className="w-5 h-5" />
+                        New Contact
+                    </Link>
+
+                    {/* Navigation */}
+                    <nav className="flex-1 space-y-1 overflow-y-auto">
+                        <div className="mb-6">
+                            <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                Menu
+                            </p>
+                            <NavItem
+                                href="/"
+                                icon={LayoutDashboard}
+                                label="All Contacts"
+                                active={pathname === "/" && !currentFolderId}
+                            />
                         </div>
-                        BizCard AI
-                    </h1>
 
-                    <nav className="flex-1 overflow-y-auto">
-                        <NavItem
-                            href="/?folderId=drafts"
-                            icon={Inbox}
-                            label="Drafts"
-                            active={pathname === "/" && (searchParams.get("folderId") === "drafts" || !searchParams.get("folderId"))}
-                        />
-                        <NavItem
-                            href="/?folderId=sent"
-                            icon={Send}
-                            label="Sent"
-                            active={searchParams.get("folderId") === "sent"}
-                        />
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between px-3 mb-2">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    Folders
+                                </p>
+                                <button
+                                    onClick={() => setIsCreatingFolder(true)}
+                                    className="text-gray-400 hover:text-gray-900 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                            </div>
 
-                        {user && (
-                            <>
-                                <div className="mt-10 mb-4 flex items-center justify-between px-3">
-                                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                                        Folders
-                                    </span>
-                                    <button
-                                        onClick={() => setIsCreating(true)}
-                                        className="text-gray-400 hover:text-gray-900 transition-colors p-1 hover:bg-gray-100 rounded"
-                                    >
-                                        <Plus className="w-4 h-4" />
-                                    </button>
+                            <NavItem
+                                href="/?folderId=drafts"
+                                icon={FolderIcon}
+                                label="Drafts"
+                                active={currentFolderId === "drafts"}
+                            />
+                            <NavItem
+                                href="/?folderId=sent"
+                                icon={Send}
+                                label="Sent"
+                                active={currentFolderId === "sent"}
+                            />
+
+                            {folders.map((folder) => (
+                                <NavItem
+                                    key={folder.id}
+                                    href={`/?folderId=${folder.id}`}
+                                    icon={FolderIcon}
+                                    label={folder.name}
+                                    active={currentFolderId === folder.id}
+                                    onDelete={() => handleDeleteFolder(folder.id)}
+                                />
+                            ))}
+
+                            {isCreatingFolder && (
+                                <div className="px-3 py-2">
+                                    <input
+                                        type="text"
+                                        value={newFolderName}
+                                        onChange={(e) => setNewFolderName(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") handleCreateFolder();
+                                            if (e.key === "Escape") setIsCreatingFolder(false);
+                                        }}
+                                        placeholder="Folder name..."
+                                        autoFocus
+                                        className="w-full p-2 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-black"
+                                    />
                                 </div>
-
-                                {isCreating && (
-                                    <form onSubmit={handleCreateFolder} className="mb-2 px-2">
-                                        <input
-                                            autoFocus
-                                            type="text"
-                                            placeholder="Folder Name"
-                                            value={newFolderName}
-                                            onChange={(e) => setNewFolderName(e.target.value)}
-                                            onBlur={() => !newFolderName && setIsCreating(false)}
-                                            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-gray-200 outline-none transition-all"
-                                        />
-                                    </form>
-                                )}
-
-                                <div className="space-y-0.5">
-                                    {folders.map((folder) => (
-                                        <NavItem
-                                            key={folder.id}
-                                            href={`/?folderId=${folder.id}`}
-                                            icon={FolderIcon}
-                                            label={folder.name}
-                                            active={pathname.includes(`folderId=${folder.id}`)}
-                                            onDelete={() => handleDeleteFolder(folder.id)}
-                                        />
-                                    ))}
-                                </div>
-                            </>
-                        )}
+                            )}
+                        </div>
                     </nav>
 
-                    <div className="pt-6 border-t border-gray-100">
-                        {user ? (
-                            <div className="flex items-center justify-between px-3 py-2">
-                                <div className="flex items-center gap-3">
-                                    {user.photoURL ? (
-                                        <img src={user.photoURL} alt={user.displayName || "User"} className="w-8 h-8 rounded-full" />
-                                    ) : (
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
-                                            {user.displayName ? user.displayName[0] : "U"}
-                                        </div>
-                                    )}
-                                    <div className="text-sm font-medium text-gray-700 truncate max-w-[100px]">
-                                        {user.displayName}
-                                    </div>
+                    {/* User Profile & Settings */}
+                    <div className="pt-6 border-t border-gray-200 space-y-2">
+                        <button
+                            onClick={() => setIsSignatureModalOpen(true)}
+                            className="flex items-center gap-3 w-full p-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors text-sm font-medium"
+                        >
+                            <Settings className="w-5 h-5" />
+                            Settings
+                        </button>
+
+                        {user && (
+                            <div className="flex items-center gap-3 px-3 py-2">
+                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-gray-600">
+                                    {user.email?.[0].toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                        {user.email}
+                                    </p>
                                 </div>
                                 <button
-                                    onClick={signOut}
-                                    className="text-gray-400 hover:text-red-600 transition-colors"
-                                    title="Sign Out"
+                                    onClick={() => signOut()}
+                                    className="text-gray-400 hover:text-gray-900 transition-colors"
                                 >
                                     <LogOut className="w-5 h-5" />
                                 </button>
                             </div>
-                        ) : (
-                            <button
-                                onClick={signInWithGoogle}
-                                className="w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-sm"
-                            >
-                                <UserIcon className="w-4 h-4" />
-                                Sign In
-                            </button>
                         )}
                     </div>
                 </div>
