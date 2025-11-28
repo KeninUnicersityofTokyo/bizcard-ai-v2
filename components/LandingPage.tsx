@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { ArrowRight, Check, Sparkles, Zap, Shield, Mail, Smartphone, FolderOpen } from "lucide-react";
+import ProductDemo from "./ProductDemo";
 
 export default function LandingPage() {
     const { signInWithGoogle } = useAuth();
@@ -25,29 +26,43 @@ export default function LandingPage() {
             </nav>
 
             {/* Hero Section */}
-            <section className="pt-32 pb-20 px-6">
-                <div className="max-w-3xl mx-auto text-center space-y-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        Now available for everyone
+            <section className="pt-32 pb-20 px-6 overflow-hidden">
+                <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+                    <div className="text-center lg:text-left space-y-8">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            Now available for everyone
+                        </div>
+                        <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight">
+                            Your business cards, <br />
+                            <span className="text-gray-400">reimagined with AI.</span>
+                        </h1>
+                        <p className="text-xl text-gray-500 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                            名刺をスキャンして、AIが下書きを自動生成。<br />
+                            直感的なシンプルさで、スマートに管理。
+                        </p>
+                        <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                            <button
+                                onClick={signInWithGoogle}
+                                className="group inline-flex items-center justify-center gap-2 bg-black text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                            >
+                                Get Started
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                            <button
+                                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-medium text-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                            >
+                                Learn more
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-400">No credit card required · Free to start</p>
                     </div>
-                    <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight">
-                        Your business cards, <br />
-                        <span className="text-gray-400">reimagined with AI.</span>
-                    </h1>
-                    <p className="text-xl text-gray-500 max-w-xl mx-auto leading-relaxed">
-                        名刺をスキャンして、AIが下書きを自動生成。<br />
-                        直感的なシンプルさで、スマートに管理。
-                    </p>
-                    <div className="pt-4">
-                        <button
-                            onClick={signInWithGoogle}
-                            className="group inline-flex items-center gap-2 bg-black text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                        >
-                            Get Started
-                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                        <p className="mt-4 text-xs text-gray-400">No credit card required · Free to start</p>
+
+                    {/* Product Demo Animation */}
+                    <div className="relative mx-auto lg:mr-0">
+                        <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-[3.5rem] opacity-20 blur-2xl animate-pulse"></div>
+                        <ProductDemo />
                     </div>
                 </div>
             </section>
@@ -81,7 +96,7 @@ export default function LandingPage() {
             </section>
 
             {/* How it Works */}
-            <section className="py-24 px-6">
+            <section id="how-it-works" className="py-24 px-6">
                 <div className="max-w-4xl mx-auto">
                     <h2 className="text-3xl font-bold text-center mb-16">How it works</h2>
                     <div className="space-y-12">
