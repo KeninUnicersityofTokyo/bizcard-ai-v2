@@ -207,7 +207,7 @@ function DashboardContent() {
     return (
         <div className="max-w-7xl mx-auto relative pb-24">
             {/* ... existing authenticated content ... */}
-            <header className="flex items-center justify-between mb-8">
+            <header className="flex items-center justify-between mb-8 pr-12 sm:pr-0">
                 <div className="flex items-center gap-4">
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                         {isTrash ? "Trash" : (folderId ? (folders.find(f => f.id === folderId)?.name || "Folder View") : "All Contacts")}
@@ -219,7 +219,7 @@ function DashboardContent() {
                 {!isTrash && (
                     <Link
                         href="/new"
-                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-sm hover:shadow-md"
+                        className="hidden sm:flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-sm hover:shadow-md"
                     >
                         <Plus className="w-5 h-5" />
                         New Contact
