@@ -126,7 +126,19 @@ export async function generateEmail(
         return JSON.parse(text);
     } catch (error: any) {
         console.error("Error generating email:", error);
-        throw new Error(`生成エラー: ${error.message}`);
+
+        // Check for safety-related errors
+        const errorMessage = error.message || "";
+        if (
+            errorMessage.includes("SAFETY") ||
+            errorMessage.includes("blocked") ||
+            errorMessage.includes("harmful") ||
+            errorMessage.includes("candidate") // Sometimes "candidate: null" due to safety
+        ) {
+            throw new Error("入力された内容に不適切な表現が含まれている可能性があるため、生成できませんでした。");
+        }
+
+        throw new Error(`生成エラー: ${errorMessage}`);
     }
 }
 

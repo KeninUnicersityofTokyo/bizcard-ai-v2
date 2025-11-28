@@ -46,6 +46,27 @@ export async function extractContactDetails(imageBase64: string) {
         return JSON.parse(text);
     } catch (error: any) {
         console.error("Error extracting details:", error);
+
+        // Check for safety-related errors
+        const errorMessage = error.message || "";
+        if (
+            errorMessage.includes("SAFETY") ||
+            errorMessage.includes("blocked") ||
+            errorMessage.includes("harmful")
+        ) {
+            // For extraction, we might want to just return empty or throw. 
+            // Since this is "extraction", if it's blocked, we probably can't extract anything.
+            // Let's return empty but log it clearly. 
+            // Or if the user wants to know WHY it failed, we should probably throw.
+            // However, the current UI handles extraction failure by just letting user edit manually.
+            // But if it's a safety violation, maybe we should warn them?
+            // For now, let's stick to the pattern: return empty for extraction to not block the flow,
+            // but if the USER explicitly requested "red error message", maybe they mean for GENERATION.
+            // The request said "writing content... sensitive... error". This usually applies to generation.
+            // But let's be safe and just return empty here so manual entry is possible.
+            return { name: "", company: "", email: "" };
+        }
+
         // Return empty details on error to allow manual entry
         return { name: "", company: "", email: "" };
     }
