@@ -15,16 +15,20 @@ import {
     FolderInput,
     CheckSquare,
     Square,
-    X
+    X,
+    RotateCcw
 } from "lucide-react";
 import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import {
-    subscribeToContacts,
-    subscribeToContactsByFolder,
+    getContacts,
+    getContactsByFolder,
     deleteContact,
     updateContact,
-    getFolders
+    getFolders,
+    permanentlyDeleteContact,
+    restoreContact,
+    cleanupTrash
 } from "@/lib/db";
 
 function DashboardContent() {
@@ -39,6 +43,8 @@ function DashboardContent() {
     const [isMoving, setIsMoving] = useState(false);
     const [targetFolderId, setTargetFolderId] = useState("");
 
+    const isTrash = folderId === "trash";
+
     useEffect(() => {
         if (loading) return;
         if (!user) {
@@ -48,6 +54,11 @@ function DashboardContent() {
 
         // Fetch folders for "Move to" functionality
         getFolders(user.uid).then(setFolders);
+
+        // Auto-cleanup trash if in trash folder
+        if (isTrash) {
+            cleanupTrash(user.uid).catch(console.error);
+        }
 
         let unsubscribe: () => void;
 
@@ -59,11 +70,21 @@ function DashboardContent() {
         if (folderId) {
             unsubscribe = subscribeToContactsByFolder(user.uid, folderId, handleUpdate);
         } else {
-            unsubscribe = subscribeToContacts(user.uid, handleUpdate);
+            // If not in a specific folder, show all non-trash contacts? 
+            // Or show all? Usually "All Contacts" excludes Trash.
+            // Let's filter out trash from "All Contacts" view if folderId is null.
+            // But subscribeToContacts returns all. We might need to filter client-side or update query.
+            // For now, let's filter client-side in handleUpdate or use a different query.
+            // Let's stick to client-side filtering for simplicity if the list isn't huge.
+            unsubscribe = subscribeToContacts(user.uid, (data) => {
+                // Filter out trash from main view
+                const nonTrash = data.filter(c => c.folderId !== "trash");
+                handleUpdate(nonTrash);
+            });
         }
 
         return () => unsubscribe();
-    }, [user, loading, folderId]);
+    }, [user, loading, folderId, isTrash]);
 
     // Clear selection when folder or search changes
     useEffect(() => {
@@ -96,25 +117,58 @@ function DashboardContent() {
 
     const handleDelete = async (id: string) => {
         if (!user) return;
-        if (confirm("Are you sure you want to delete this contact?")) {
-            await deleteContact(user.uid, id);
-            // Selection cleanup if needed
-            if (selectedContacts.has(id)) {
-                const newSelected = new Set(selectedContacts);
-                newSelected.delete(id);
-                setSelectedContacts(newSelected);
+
+        if (isTrash) {
+            if (confirm("Are you sure you want to PERMANENTLY delete this contact?")) {
+                await permanentlyDeleteContact(user.uid, id);
+                removeFromSelection(id);
             }
+        } else {
+            if (confirm("Move this contact to Trash?")) {
+                await deleteContact(user.uid, id);
+                removeFromSelection(id);
+            }
+        }
+    };
+
+    const handleRestore = async (id: string) => {
+        if (!user) return;
+        await restoreContact(user.uid, id);
+        removeFromSelection(id);
+    };
+
+    const removeFromSelection = (id: string) => {
+        if (selectedContacts.has(id)) {
+            const newSelected = new Set(selectedContacts);
+            newSelected.delete(id);
+            setSelectedContacts(newSelected);
         }
     };
 
     const handleBulkDelete = async () => {
         if (!user) return;
-        if (confirm(`Are you sure you want to delete ${selectedContacts.size} contacts?`)) {
+        const message = isTrash
+            ? `Are you sure you want to PERMANENTLY delete ${selectedContacts.size} contacts?`
+            : `Are you sure you want to move ${selectedContacts.size} contacts to Trash?`;
+
+        if (confirm(message)) {
             for (const id of Array.from(selectedContacts)) {
-                await deleteContact(user.uid, id);
+                if (isTrash) {
+                    await permanentlyDeleteContact(user.uid, id);
+                } else {
+                    await deleteContact(user.uid, id);
+                }
             }
             setSelectedContacts(new Set());
         }
+    };
+
+    const handleBulkRestore = async () => {
+        if (!user) return;
+        for (const id of Array.from(selectedContacts)) {
+            await restoreContact(user.uid, id);
+        }
+        setSelectedContacts(new Set());
     };
 
     const handleBulkMove = async () => {
@@ -161,19 +215,21 @@ function DashboardContent() {
             <header className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                        {folderId ? (folders.find(f => f.id === folderId)?.name || "Folder View") : "All Contacts"}
+                        {isTrash ? "Trash" : (folderId ? (folders.find(f => f.id === folderId)?.name || "Folder View") : "All Contacts")}
                     </h1>
                     <span className="text-gray-400 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
                         {filteredContacts.length}
                     </span>
                 </div>
-                <Link
-                    href="/new"
-                    className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-sm hover:shadow-md"
-                >
-                    <Plus className="w-5 h-5" />
-                    New Contact
-                </Link>
+                {!isTrash && (
+                    <Link
+                        href="/new"
+                        className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-sm hover:shadow-md"
+                    >
+                        <Plus className="w-5 h-5" />
+                        New Contact
+                    </Link>
+                )}
             </header>
 
             {/* Toolbar */}
@@ -218,9 +274,9 @@ function DashboardContent() {
                     {filteredContacts.length === 0 ? (
                         <div className="col-span-full text-center py-20">
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <User className="w-8 h-8 text-gray-300" />
+                                {isTrash ? <Trash2 className="w-8 h-8 text-gray-300" /> : <User className="w-8 h-8 text-gray-300" />}
                             </div>
-                            <p className="text-gray-500 font-medium">No contacts found</p>
+                            <p className="text-gray-500 font-medium">{isTrash ? "Trash is empty" : "No contacts found"}</p>
                         </div>
                     ) : (
                         filteredContacts.map((contact) => (
@@ -253,21 +309,35 @@ function DashboardContent() {
 
                                 {/* Action Buttons */}
                                 <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Link
-                                        href={`/contact/${contact.id}`}
-                                        className="p-2 bg-white text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg shadow-sm border border-gray-100 transition-colors"
-                                        title="Edit"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <Pencil className="w-4 h-4" />
-                                    </Link>
+                                    {isTrash ? (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRestore(contact.id);
+                                            }}
+                                            className="p-2 bg-white text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg shadow-sm border border-gray-100 transition-colors"
+                                            title="Restore"
+                                        >
+                                            <RotateCcw className="w-4 h-4" />
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href={`/contact/${contact.id}`}
+                                            className="p-2 bg-white text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg shadow-sm border border-gray-100 transition-colors"
+                                            title="Edit"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </Link>
+                                    )}
+
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDelete(contact.id);
                                         }}
                                         className="p-2 bg-white text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg shadow-sm border border-gray-100 transition-colors"
-                                        title="Delete"
+                                        title={isTrash ? "Delete Permanently" : "Delete"}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -316,23 +386,33 @@ function DashboardContent() {
                     </div>
 
                     <div className="flex items-center gap-4 flex-1">
-                        <div className="relative flex-1">
-                            <select
-                                value={targetFolderId}
-                                onChange={(e) => setTargetFolderId(e.target.value)}
-                                className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-black/5 cursor-pointer hover:bg-gray-100 transition-colors"
+                        {isTrash ? (
+                            <button
+                                onClick={handleBulkRestore}
+                                className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors whitespace-nowrap flex items-center gap-2"
                             >
-                                <option value="">Move to folder...</option>
-                                <option value="drafts">Drafts</option>
-                                <option value="sent">Sent</option>
-                                {folders.map(f => (
-                                    <option key={f.id} value={f.id}>{f.name}</option>
-                                ))}
-                            </select>
-                            <FolderInput className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                        </div>
+                                <RotateCcw className="w-4 h-4" />
+                                Restore
+                            </button>
+                        ) : (
+                            <div className="relative flex-1">
+                                <select
+                                    value={targetFolderId}
+                                    onChange={(e) => setTargetFolderId(e.target.value)}
+                                    className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-black/5 cursor-pointer hover:bg-gray-100 transition-colors"
+                                >
+                                    <option value="">Move to folder...</option>
+                                    <option value="drafts">Drafts</option>
+                                    <option value="sent">Sent</option>
+                                    {folders.map(f => (
+                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                    ))}
+                                </select>
+                                <FolderInput className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
+                        )}
 
-                        {targetFolderId && (
+                        {!isTrash && targetFolderId && (
                             <button
                                 onClick={handleBulkMove}
                                 disabled={isMoving}
@@ -349,7 +429,7 @@ function DashboardContent() {
                             className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-colors flex items-center gap-2 text-sm font-medium"
                         >
                             <Trash2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">Delete</span>
+                            <span className="hidden sm:inline">{isTrash ? "Delete Permanently" : "Delete"}</span>
                         </button>
                     </div>
 

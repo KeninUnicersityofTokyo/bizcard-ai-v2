@@ -186,11 +186,65 @@ export const updateContact = async (userId: string, contactId: string, updates: 
     }
 };
 
+// Soft delete (move to trash)
 export const deleteContact = async (userId: string, contactId: string) => {
+    const docRef = doc(db, `users/${userId}/contacts`, contactId);
+    const updates = {
+        folderId: "trash",
+        deletedAt: Date.now()
+    };
+    await updateDoc(docRef, updates);
+
+    // Update cache
+    if (contactCache.has(contactId)) {
+        const current = contactCache.get(contactId)!;
+        contactCache.set(contactId, { ...current, ...updates });
+    }
+};
+
+// Permanent delete
+export const permanentlyDeleteContact = async (userId: string, contactId: string) => {
     await deleteDoc(doc(db, `users/${userId}/contacts`, contactId));
 
     // Remove from cache
     contactCache.delete(contactId);
+};
+
+// Restore from trash
+export const restoreContact = async (userId: string, contactId: string) => {
+    const docRef = doc(db, `users/${userId}/contacts`, contactId);
+    // Restore to 'drafts' by default or we could store previous folder. 
+    // For simplicity, let's restore to 'drafts' or 'inbox' if we had one. 
+    // Let's use 'drafts' as safe default or check if we can store original folder.
+    // For now, restoring to 'drafts' is safe.
+    const updates = {
+        folderId: "drafts",
+        deletedAt: null
+    };
+    await updateDoc(docRef, updates);
+
+    // Update cache
+    if (contactCache.has(contactId)) {
+        const current = contactCache.get(contactId)!;
+        contactCache.set(contactId, { ...current, ...updates });
+    }
+};
+
+// Cleanup trash (delete items older than 7 days)
+export const cleanupTrash = async (userId: string) => {
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const q = query(
+        collection(db, `users/${userId}/contacts`),
+        where("folderId", "==", "trash"),
+        where("deletedAt", "<", sevenDaysAgo)
+    );
+
+    const snapshot = await getDocs(q);
+    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+
+    // Clear cache for deleted items
+    snapshot.docs.forEach(doc => contactCache.delete(doc.id));
 };
 
 export const subscribeToContacts = (userId: string, callback: (contacts: Contact[]) => void): Unsubscribe => {

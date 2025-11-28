@@ -3,10 +3,36 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Building, User, Calendar, Trash2, Send, Folder as FolderIcon, Mic, MicOff, Sparkles, Loader2, Pencil } from "lucide-react";
+import {
+    ArrowLeft,
+    Mail,
+    Building,
+    User,
+    Calendar,
+    Trash2,
+    Send,
+    Folder as FolderIcon,
+    Mic,
+    MicOff,
+    Sparkles,
+    Loader2,
+    Pencil,
+    Save,
+    X,
+    RotateCcw,
+    AlertTriangle
+} from "lucide-react";
 import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { getContact, deleteContact, updateContact, getFolders, getContactImage } from "@/lib/db";
+import {
+    getContact,
+    deleteContact,
+    updateContact,
+    getFolders,
+    getContactImage,
+    permanentlyDeleteContact,
+    restoreContact
+} from "@/lib/db";
 import { useAiRefine } from "@/hooks/useAiRefine";
 
 export default function ContactDetailPage({ params }: { params: { id: string } }) {
@@ -16,6 +42,7 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
     const [folders, setFolders] = useState<Folder[]>([]);
     const [image, setImage] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [editForm, setEditForm] = useState({
         name: "",
         company: "",
@@ -46,7 +73,7 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                     subject: found.generatedEmail.subject,
                     body: found.generatedEmail.body
                 });
-                // ... (image fetching)
+                getContactImage(user.uid, params.id).then(setImage);
             } else {
                 router.push("/");
             }
@@ -54,14 +81,40 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
         getFolders(user.uid).then(setFolders);
     }, [params.id, router, user]);
 
-    // ... (handleDelete, handleMoveFolder)
+    const handleDelete = async () => {
+        if (!user || !contact) return;
+
+        if (contact.folderId === "trash") {
+            if (confirm("Are you sure you want to PERMANENTLY delete this contact? This cannot be undone.")) {
+                setIsDeleting(true);
+                await permanentlyDeleteContact(user.uid, contact.id);
+                router.push("/?folderId=trash");
+            }
+        } else {
+            if (confirm("Move this contact to Trash?")) {
+                setIsDeleting(true);
+                await deleteContact(user.uid, contact.id);
+                router.push("/");
+            }
+        }
+    };
+
+    const handleRestore = async () => {
+        if (!user || !contact) return;
+        await restoreContact(user.uid, contact.id);
+        const updated = await getContact(user.uid, contact.id);
+        setContact(updated);
+        router.refresh();
+    };
 
     const handleOpenMailer = async () => {
         if (!contact || !user) return;
 
-        // Auto-move to Sent folder
-        await updateContact(user.uid, params.id, { folderId: "sent" });
-        setContact((prev: Contact | null) => prev ? { ...prev, folderId: "sent" } : null);
+        // Auto-move to Sent folder if not already there or in trash
+        if (contact.folderId !== "sent" && contact.folderId !== "trash") {
+            await updateContact(user.uid, params.id, { folderId: "sent" });
+            setContact((prev: Contact | null) => prev ? { ...prev, folderId: "sent" } : null);
+        }
 
         const subject = encodeURIComponent(contact.generatedEmail.subject);
         const body = encodeURIComponent(contact.generatedEmail.body);
@@ -70,7 +123,7 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
 
         window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}${cc}${bcc}`;
 
-        // Navigate to Sent folder with a slight delay to allow mailer to open
+        // Navigate to Sent folder with a slight delay
         setTimeout(() => {
             router.push("/?folderId=sent");
         }, 500);
@@ -98,16 +151,138 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
 
     if (!contact) return <div className="p-20 text-center text-gray-400">Loading...</div>;
 
+    const isTrash = contact.folderId === "trash";
+
     return (
         <div className="max-w-4xl mx-auto pb-20">
-            {/* ... (Header) ... */}
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+                <Link
+                    href="/"
+                    className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    Back
+                </Link>
+
+                <div className="flex items-center gap-3">
+                    {isTrash ? (
+                        <>
+                            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg text-sm font-medium mr-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                Deleted
+                            </div>
+                            <button
+                                onClick={handleRestore}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                                Restore
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-medium text-sm"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Delete Permanently
+                            </button>
+                        </>
+                    ) : isEditing ? (
+                        <>
+                            <button
+                                onClick={() => setIsEditing(false)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                            >
+                                <X className="w-4 h-4" />
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors font-medium text-sm shadow-sm"
+                            >
+                                <Save className="w-4 h-4" />
+                                Save Changes
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                            >
+                                <Pencil className="w-4 h-4" />
+                                Edit
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-red-600 rounded-xl hover:bg-red-50 hover:border-red-100 transition-colors font-medium text-sm"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
 
             <div className="grid gap-8 md:grid-cols-3">
                 {/* Main Info */}
                 <div className="md:col-span-2 space-y-8">
                     {/* Basic Info Card */}
                     <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm space-y-6">
-                        {/* ... (Company, Email, Date) ... */}
+                        <div className="space-y-4">
+                            {/* Name */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Name</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium focus:ring-2 focus:ring-black outline-none"
+                                    />
+                                ) : (
+                                    <h1 className="text-3xl font-bold text-gray-900">{contact.name}</h1>
+                                )}
+                            </div>
+
+                            {/* Company */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Company</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editForm.company}
+                                        onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium focus:ring-2 focus:ring-black outline-none"
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
+                                        <Building className="w-5 h-5 text-gray-400" />
+                                        {contact.company}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                                {isEditing ? (
+                                    <input
+                                        type="email"
+                                        value={editForm.email}
+                                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium focus:ring-2 focus:ring-black outline-none"
+                                    />
+                                ) : (
+                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
+                                        <Mail className="w-5 h-5 text-gray-400" />
+                                        {contact.email}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
                         {/* CC/BCC Fields in Edit Mode */}
                         {isEditing && (
@@ -134,8 +309,6 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                                 </div>
                             </div>
                         )}
-
-                        {/* ... (Folder Select) ... */}
                     </div>
 
                     {/* Generated Email Card */}
@@ -210,7 +383,7 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                                     </div>
                                 )}
                             </div>
-                            {!isEditing && (
+                            {!isEditing && !isTrash && (
                                 <button
                                     onClick={handleOpenMailer}
                                     className="w-full py-3.5 bg-black hover:bg-gray-800 text-white rounded-full font-bold transition-all shadow-md flex items-center justify-center gap-2"
@@ -234,7 +407,6 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                             />
                         </div>
                     ) : (
-                        // Placeholder or skeleton if needed, but keeping it clean for now
                         null
                     )}
 

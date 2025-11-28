@@ -161,6 +161,13 @@ function SidebarContent() {
                                 active={currentFolderId === "sent"}
                                 onClick={() => setIsMobileOpen(false)}
                             />
+                            <NavItem
+                                href="/?folderId=trash"
+                                icon={Trash2}
+                                label="Trash"
+                                active={currentFolderId === "trash"}
+                                onClick={() => setIsMobileOpen(false)}
+                            />
 
                             {folders.map((folder) => (
                                 <NavItem
