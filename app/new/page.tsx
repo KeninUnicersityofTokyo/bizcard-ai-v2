@@ -6,6 +6,7 @@ import ImageUploader from "@/components/ImageUploader";
 import VoiceInput from "@/components/VoiceInput";
 import EmailPreview from "@/components/EmailPreview";
 import { generateEmail } from "@/actions/generateEmail";
+import { extractContactDetails } from "@/actions/extractContactDetails";
 import { useAuth } from "@/context/AuthContext";
 import { saveContact } from "@/lib/db";
 
@@ -30,14 +31,35 @@ export default function NewContactPage() {
     const handleImageSelected = async (base64: string) => {
         setImage(base64);
         setError(null);
-        // Move to Step 2 (Settings) instead of auto-generating
-        setStep(2);
+        setIsLoading(true);
+
+        try {
+            // Extract details from image
+            const extracted = await extractContactDetails(base64);
+            setManualDetails({
+                name: extracted.name || "",
+                company: extracted.company || "",
+                email: extracted.email || ""
+            });
+
+            // Move to Step 2 (Settings)
+            setStep(2);
+            // Open details by default so user sees they can edit
+            setIsManualDetailsOpen(true);
+        } catch (error: any) {
+            console.error("Extraction failed:", error);
+            // Still move to step 2, just empty details
+            setStep(2);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSkipToManual = () => {
         setIsManualMode(true);
         setStep(2);
         setError(null);
+        setIsManualDetailsOpen(true);
     };
 
     const handleGenerate = async () => {
@@ -49,7 +71,7 @@ export default function NewContactPage() {
             const result = await generateEmail(
                 image,
                 context,
-                isManualMode ? manualDetails : undefined,
+                manualDetails, // Always pass manualDetails (it contains extracted or manual info)
                 platform,
                 tone
             );
@@ -74,7 +96,7 @@ export default function NewContactPage() {
             saveContact(user.uid, {
                 folderId: folderId || "drafts",
                 name: emailData.name,
-                company: isManualMode ? manualDetails.company : "Unknown",
+                company: manualDetails.company || "Unknown", // Use verified company name
                 email: emailData.email,
                 context,
                 imageBase64: null, // Never save image as per user request
@@ -121,17 +143,26 @@ export default function NewContactPage() {
                         <span className="text-xl font-bold text-gray-900">Scan Business Card</span>
                     </div>
 
-                    <ImageUploader onImageSelected={handleImageSelected} />
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <Loader2 className="w-10 h-10 animate-spin text-black" />
+                            <p className="text-gray-500 font-medium">Scanning...</p>
+                        </div>
+                    ) : (
+                        <ImageUploader onImageSelected={handleImageSelected} />
+                    )}
 
-                    <div className="text-center mt-6">
-                        <p className="text-slate-500 text-sm mb-2">- または -</p>
-                        <button
-                            onClick={handleSkipToManual}
-                            className="text-gray-500 hover:text-black text-sm font-medium underline underline-offset-4 transition-colors"
-                        >
-                            手動で詳細を入力
-                        </button>
-                    </div>
+                    {!isLoading && (
+                        <div className="text-center mt-6">
+                            <p className="text-slate-500 text-sm mb-2">- または -</p>
+                            <button
+                                onClick={handleSkipToManual}
+                                className="text-gray-500 hover:text-black text-sm font-medium underline underline-offset-4 transition-colors"
+                            >
+                                手動で詳細を入力
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Step 2: Settings & Context (and Manual Details if applicable) */}
@@ -142,39 +173,46 @@ export default function NewContactPage() {
                             <span className="text-xl font-bold text-gray-900">Configuration</span>
                         </div>
 
-                        {/* Manual Details Input (Only if Manual Mode) */}
-                        {isManualMode && (
-                            <div className="mb-8 p-6 bg-white border border-gray-200 rounded-2xl shadow-sm space-y-5">
-                                <h3 className="font-bold text-gray-900 mb-2">Contact Details</h3>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">会社名</label>
-                                    <input
-                                        type="text"
-                                        value={manualDetails.company}
-                                        onChange={(e) => setManualDetails({ ...manualDetails, company: e.target.value })}
-                                        className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">名前</label>
-                                    <input
-                                        type="text"
-                                        value={manualDetails.name}
-                                        onChange={(e) => setManualDetails({ ...manualDetails, name: e.target.value })}
-                                        className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">メールアドレス</label>
-                                    <input
-                                        type="email"
-                                        value={manualDetails.email}
-                                        onChange={(e) => setManualDetails({ ...manualDetails, email: e.target.value })}
-                                        className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
-                                    />
-                                </div>
+                        {/* Contact Details (Editable) */}
+                        <div className="mb-8 p-6 bg-white border border-gray-200 rounded-2xl shadow-sm space-y-5">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-gray-900">Contact Details</h3>
+                                <span className="text-xs text-gray-400 font-medium">
+                                    {image ? "Scanned" : "Manual Input"}
+                                </span>
                             </div>
-                        )}
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">会社名</label>
+                                <input
+                                    type="text"
+                                    value={manualDetails.company}
+                                    onChange={(e) => setManualDetails({ ...manualDetails, company: e.target.value })}
+                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    placeholder="会社名を入力"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">名前</label>
+                                <input
+                                    type="text"
+                                    value={manualDetails.name}
+                                    onChange={(e) => setManualDetails({ ...manualDetails, name: e.target.value })}
+                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    placeholder="名前を入力"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">メールアドレス</label>
+                                <input
+                                    type="email"
+                                    value={manualDetails.email}
+                                    onChange={(e) => setManualDetails({ ...manualDetails, email: e.target.value })}
+                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    placeholder="email@example.com"
+                                />
+                            </div>
+                        </div>
 
                         {/* Settings: Platform & Tone */}
                         <div className="grid grid-cols-2 gap-6 mb-8">

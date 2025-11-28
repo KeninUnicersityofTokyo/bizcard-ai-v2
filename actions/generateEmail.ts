@@ -87,6 +87,16 @@ export async function generateEmail(
 
         const finalParts: any[] = [prompt]; // Start with the main prompt
 
+        if (manualDetails) {
+            // Prioritize manual details for specific fields
+            finalParts[0] += `\n\n**相手の情報 (確定済み)**:
+              - 名前: ${manualDetails.name}
+              - 会社名: ${manualDetails.company}
+              - メールアドレス: ${manualDetails.email}
+              
+              ※上記の情報はユーザーが確認・修正したものです。この情報を正として使用してください。`;
+        }
+
         if (imageBase64) {
             const base64Data = imageBase64.split(",")[1];
             finalParts.push({
@@ -96,14 +106,12 @@ export async function generateEmail(
                 },
             });
             // Add instruction for image processing to the prompt
-            finalParts[0] += `\n\n**名刺画像情報**: 提供された名刺画像から、相手の名前、会社名、メールアドレスを正確に読み取ってください。`;
-        } else if (manualDetails) {
-            // Add manual details to the prompt
-            finalParts[0] += `\n\n**相手の情報 (手動入力)**:
-              - 名前: ${manualDetails.name}
-              - 会社名: ${manualDetails.company}
-              - メールアドレス: ${manualDetails.email}`;
-        } else {
+            if (!manualDetails) {
+                finalParts[0] += `\n\n**名刺画像情報**: 提供された名刺画像から、相手の名前、会社名、メールアドレスを正確に読み取ってください。`;
+            } else {
+                finalParts[0] += `\n\n**名刺画像情報**: 画像は補足情報（スローガンや事業内容など）の参照用として使用してください。名前や連絡先は上記の「相手の情報」を優先してください。`;
+            }
+        } else if (!manualDetails) {
             throw new Error("名刺画像または手動入力情報のいずれかが必要です。");
         }
 
