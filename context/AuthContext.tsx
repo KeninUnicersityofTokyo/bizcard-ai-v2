@@ -4,11 +4,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import {
     GoogleAuthProvider,
     signInWithPopup,
+    signInWithCredential,
     signOut as firebaseSignOut,
     onAuthStateChanged,
     User,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { Capacitor } from "@capacitor/core";
 
 interface AuthContextType {
     user: User | null;
@@ -41,16 +43,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const signInWithGoogle = async (options?: SignInOptions) => {
-        const provider = new GoogleAuthProvider();
-        if (options?.forceSelection) {
-            provider.setCustomParameters({
-                prompt: 'select_account'
-            });
-        }
         try {
-            await signInWithPopup(auth, provider);
-        } catch (error) {
+            if (Capacitor.isNativePlatform()) {
+                const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
+                const googleUser = await GoogleAuth.signIn();
+                const idToken = googleUser.authentication.idToken;
+                const credential = GoogleAuthProvider.credential(idToken);
+                await signInWithCredential(auth, credential);
+            } else {
+                const provider = new GoogleAuthProvider();
+                if (options?.forceSelection) {
+                    provider.setCustomParameters({
+                        prompt: 'select_account'
+                    });
+                }
+                await signInWithPopup(auth, provider);
+            }
+        } catch (error: any) {
             console.error("Error signing in with Google", error);
+            // If native sign-in fails or is cancelled, we might want to show an alert
+            if (Capacitor.isNativePlatform()) {
+                alert(`Login failed: ${error.message || JSON.stringify(error)}`);
+            }
         }
     };
 

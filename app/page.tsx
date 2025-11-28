@@ -319,7 +319,7 @@ function DashboardContent() {
                                         </button>
                                     ) : (
                                         <Link
-                                            href={`/contact/${contact.id}`}
+                                            href={`/contact?id=${contact.id}`}
                                             className="p-2 bg-white text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg shadow-sm border border-gray-100 transition-colors"
                                             title="Edit"
                                             onClick={(e) => e.stopPropagation()}
@@ -341,7 +341,7 @@ function DashboardContent() {
                                 </div>
 
                                 {/* Card Content (Clickable Link) */}
-                                <Link href={`/contact/${contact.id}`} className="block p-6 pt-12">
+                                <Link href={`/contact?id=${contact.id}`} className="block p-6 pt-12">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-2 text-gray-500 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
                                             <Building className="w-3.5 h-3.5" />

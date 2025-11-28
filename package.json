@@ -9,6 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@capacitor/camera": "^7.0.2",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "@google/generative-ai": "^0.24.1",
     "autoprefixer": "^10.4.22",
     "firebase": "^12.6.0",

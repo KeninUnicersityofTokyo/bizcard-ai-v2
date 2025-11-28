@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -21,6 +21,14 @@ export const metadata: Metadata = {
         title: "ReCard AI - スマート名刺管理 & AIメール生成",
         description: "名刺をスキャンして、AIが最適なビジネスメールを瞬時に生成。",
     },
+};
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
 };
 
 import MainLayout from "@/components/MainLayout";

@@ -95,11 +95,10 @@ function SidebarContent() {
         <>
             {/* Mobile Menu Button */}
             <button
-                onClick={() => setIsMobileOpen(!isMobileOpen)}
-                className="lg:hidden fixed top-4 right-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-100"
-            >
-                {isMobileOpen ? <X /> : <Menu />}
-            </button>
+                onClick={() => setIsMobileOpen(true)}
+                className="lg:hidden fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 z-40 p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label={t("common.menu")}
+            ></button>
 
             {/* Mobile Backdrop */}
             {isMobileOpen && (
@@ -111,8 +110,10 @@ function SidebarContent() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 z-40 h-[100dvh] w-72 bg-gray-50 border-r border-gray-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
-                    }`}
+                className={`
+                fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen pt-[env(safe-area-inset-top)]
+                ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+            `}
             >
                 <div className="h-full flex flex-col p-6">
                     {/* Logo */}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
     ArrowLeft,
@@ -35,8 +35,10 @@ import {
 } from "@/lib/db";
 import { useAiRefine } from "@/hooks/useAiRefine";
 
-export default function ContactDetailPage({ params }: { params: { id: string } }) {
+function ContactDetailContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const id = searchParams.get("id");
     const { user } = useAuth();
     const [contact, setContact] = useState<Contact | null>(null);
     const [folders, setFolders] = useState<Folder[]>([]);
@@ -59,9 +61,9 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
     );
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !id) return;
 
-        getContact(user.uid, params.id).then((found) => {
+        getContact(user.uid, id).then((found) => {
             if (found) {
                 setContact(found);
                 setEditForm({
@@ -73,16 +75,16 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                     subject: found.generatedEmail.subject,
                     body: found.generatedEmail.body
                 });
-                getContactImage(user.uid, params.id).then(setImage);
+                getContactImage(user.uid, id).then(setImage);
             } else {
                 router.push("/");
             }
         });
         getFolders(user.uid).then(setFolders);
-    }, [params.id, router, user]);
+    }, [id, router, user]);
 
     const handleDelete = async () => {
-        if (!user || !contact) return;
+        if (!user || !contact || !id) return;
 
         if (contact.folderId === "trash") {
             if (confirm("この連絡先を完全に削除しますか？この操作は取り消せません。")) {
@@ -100,7 +102,7 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
     };
 
     const handleRestore = async () => {
-        if (!user || !contact) return;
+        if (!user || !contact || !id) return;
         await restoreContact(user.uid, contact.id);
         const updated = await getContact(user.uid, contact.id);
         setContact(updated);
@@ -108,11 +110,11 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
     };
 
     const handleOpenMailer = async () => {
-        if (!contact || !user) return;
+        if (!contact || !user || !id) return;
 
         // Auto-move to Sent folder if not already there or in trash
         if (contact.folderId !== "sent" && contact.folderId !== "trash") {
-            await updateContact(user.uid, params.id, { folderId: "sent" });
+            await updateContact(user.uid, id, { folderId: "sent" });
             setContact((prev: Contact | null) => prev ? { ...prev, folderId: "sent" } : null);
         }
 
@@ -130,7 +132,7 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
     };
 
     const handleSaveEdit = async () => {
-        if (!user || !contact) return;
+        if (!user || !contact || !id) return;
 
         const updates = {
             name: editForm.name,
@@ -144,11 +146,12 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
             }
         };
 
-        await updateContact(user.uid, params.id, updates);
+        await updateContact(user.uid, id, updates);
         setContact({ ...contact, ...updates });
         setIsEditing(false);
     };
 
+    if (!id) return null;
     if (!contact) return <div className="p-20 text-center text-gray-400">Loading...</div>;
 
     const isTrash = contact.folderId === "trash";
@@ -419,5 +422,13 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ContactDetailPage() {
+    return (
+        <Suspense fallback={<div className="p-20 text-center text-gray-400">Loading...</div>}>
+            <ContactDetailContent />
+        </Suspense>
     );
 }
