@@ -14,6 +14,22 @@ export default function ImageUploader({ onImageSelected }: ImageUploaderProps) {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Validation
+            const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+            const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic"];
+
+            if (file.size > MAX_SIZE) {
+                alert("ファイルサイズが大きすぎます。5MB以下の画像を選択してください。");
+                if (fileInputRef.current) fileInputRef.current.value = "";
+                return;
+            }
+
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                alert("対応していないファイル形式です。JPG, PNG, WebP形式の画像を選択してください。");
+                if (fileInputRef.current) fileInputRef.current.value = "";
+                return;
+            }
+
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64 = reader.result as string;
