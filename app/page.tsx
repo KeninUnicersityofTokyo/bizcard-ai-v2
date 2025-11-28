@@ -3,18 +3,41 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Plus, Search, Mail, User, Building, Loader2 } from "lucide-react";
-import { Contact } from "@/types";
+import {
+    Plus,
+    Search,
+    Mail,
+    User,
+    Building,
+    Loader2,
+    Trash2,
+    Pencil,
+    FolderInput,
+    CheckSquare,
+    Square,
+    X
+} from "lucide-react";
+import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { subscribeToContacts, subscribeToContactsByFolder } from "@/lib/db";
+import {
+    subscribeToContacts,
+    subscribeToContactsByFolder,
+    deleteContact,
+    updateContact,
+    getFolders
+} from "@/lib/db";
 
 function DashboardContent() {
     const searchParams = useSearchParams();
     const folderId = searchParams.get("folderId");
     const { user, loading } = useAuth();
     const [contacts, setContacts] = useState<Contact[]>([]);
+    const [folders, setFolders] = useState<Folder[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isFetching, setIsFetching] = useState(true);
+    const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+    const [isMoving, setIsMoving] = useState(false);
+    const [targetFolderId, setTargetFolderId] = useState("");
 
     useEffect(() => {
         if (loading) return;
@@ -22,6 +45,9 @@ function DashboardContent() {
             setIsFetching(false);
             return;
         }
+
+        // Fetch folders for "Move to" functionality
+        getFolders(user.uid).then(setFolders);
 
         let unsubscribe: () => void;
 
@@ -39,11 +65,74 @@ function DashboardContent() {
         return () => unsubscribe();
     }, [user, loading, folderId]);
 
+    // Clear selection when folder or search changes
+    useEffect(() => {
+        setSelectedContacts(new Set());
+    }, [folderId, searchTerm]);
+
     const filteredContacts = contacts.filter(
         (c) =>
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.company.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(selectedContacts);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedContacts(newSelected);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedContacts.size === filteredContacts.length) {
+            setSelectedContacts(new Set());
+        } else {
+            setSelectedContacts(new Set(filteredContacts.map(c => c.id)));
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!user) return;
+        if (confirm("Are you sure you want to delete this contact?")) {
+            await deleteContact(user.uid, id);
+            // Selection cleanup if needed
+            if (selectedContacts.has(id)) {
+                const newSelected = new Set(selectedContacts);
+                newSelected.delete(id);
+                setSelectedContacts(newSelected);
+            }
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (!user) return;
+        if (confirm(`Are you sure you want to delete ${selectedContacts.size} contacts?`)) {
+            for (const id of Array.from(selectedContacts)) {
+                await deleteContact(user.uid, id);
+            }
+            setSelectedContacts(new Set());
+        }
+    };
+
+    const handleBulkMove = async () => {
+        if (!user || !targetFolderId) return;
+        setIsMoving(true);
+        try {
+            for (const id of Array.from(selectedContacts)) {
+                await updateContact(user.uid, id, { folderId: targetFolderId });
+            }
+            setSelectedContacts(new Set());
+            setTargetFolderId("");
+        } catch (error) {
+            console.error("Error moving contacts:", error);
+            alert("Failed to move some contacts.");
+        } finally {
+            setIsMoving(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -68,11 +157,16 @@ function DashboardContent() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto">
-            <header className="flex items-center justify-between mb-10">
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                    {folderId ? "Folder View" : "BizCard AI (v2)"}
-                </h1>
+        <div className="max-w-7xl mx-auto relative pb-24">
+            <header className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                        {folderId ? (folders.find(f => f.id === folderId)?.name || "Folder View") : "All Contacts"}
+                    </h1>
+                    <span className="text-gray-400 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
+                        {filteredContacts.length}
+                    </span>
+                </div>
                 <Link
                     href="/new"
                     className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-sm hover:shadow-md"
@@ -82,16 +176,34 @@ function DashboardContent() {
                 </Link>
             </header>
 
-            {/* Search */}
-            <div className="relative mb-8 max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                    type="text"
-                    placeholder="Search contacts..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-gray-900 focus:ring-2 focus:ring-gray-200 outline-none shadow-sm placeholder:text-gray-400 transition-all"
-                />
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-between items-start sm:items-center">
+                {/* Search */}
+                <div className="relative w-full sm:max-w-md">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search contacts..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black/5 outline-none shadow-sm placeholder:text-gray-400 transition-all"
+                    />
+                </div>
+
+                {/* Select All Toggle */}
+                {filteredContacts.length > 0 && (
+                    <button
+                        onClick={toggleSelectAll}
+                        className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-2"
+                    >
+                        {selectedContacts.size === filteredContacts.length && filteredContacts.length > 0 ? (
+                            <CheckSquare className="w-5 h-5" />
+                        ) : (
+                            <Square className="w-5 h-5" />
+                        )}
+                        Select All
+                    </button>
+                )}
             </div>
 
             {/* Contact List */}
@@ -112,37 +224,141 @@ function DashboardContent() {
                         </div>
                     ) : (
                         filteredContacts.map((contact) => (
-                            <Link
+                            <div
                                 key={contact.id}
-                                href={`/contact/${contact.id}`}
-                                className="block p-6 bg-white border border-gray-100 rounded-2xl hover:border-gray-300 hover:shadow-lg transition-all duration-300 group"
+                                className={`relative group block bg-white border rounded-2xl transition-all duration-300 ${selectedContacts.has(contact.id)
+                                    ? "border-blue-500 shadow-md ring-1 ring-blue-500"
+                                    : "border-gray-100 hover:border-gray-300 hover:shadow-lg"
+                                    }`}
                             >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-center gap-2 text-gray-500 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
-                                        <Building className="w-3.5 h-3.5" />
-                                        <span>{contact.company}</span>
+                                {/* Selection Checkbox */}
+                                <div className="absolute top-4 left-4 z-10">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSelect(contact.id);
+                                        }}
+                                        className={`p-1 rounded-md transition-colors ${selectedContacts.has(contact.id)
+                                            ? "text-blue-600 bg-blue-50"
+                                            : "text-gray-300 hover:text-gray-500 bg-white/80 backdrop-blur-sm"
+                                            }`}
+                                    >
+                                        {selectedContacts.has(contact.id) ? (
+                                            <CheckSquare className="w-5 h-5" />
+                                        ) : (
+                                            <Square className="w-5 h-5" />
+                                        )}
+                                    </button>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Link
+                                        href={`/contact/${contact.id}`}
+                                        className="p-2 bg-white text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg shadow-sm border border-gray-100 transition-colors"
+                                        title="Edit"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </Link>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(contact.id);
+                                        }}
+                                        className="p-2 bg-white text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg shadow-sm border border-gray-100 transition-colors"
+                                        title="Delete"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Card Content (Clickable Link) */}
+                                <Link href={`/contact/${contact.id}`} className="block p-6 pt-12">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-2 text-gray-500 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
+                                            <Building className="w-3.5 h-3.5" />
+                                            <span className="truncate max-w-[150px]">{contact.company}</span>
+                                        </div>
+                                        <span className="text-xs text-gray-400 font-medium whitespace-nowrap ml-2">
+                                            {new Date(contact.createdAt).toLocaleDateString()}
+                                        </span>
                                     </div>
-                                    <span className="text-xs text-gray-400 font-medium">
-                                        {new Date(contact.createdAt).toLocaleDateString()}
-                                    </span>
-                                </div>
 
-                                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                                    {contact.name}
-                                </h3>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors truncate">
+                                        {contact.name}
+                                    </h3>
 
-                                <div className="text-sm text-gray-500 flex items-center gap-2 mb-6">
-                                    <Mail className="w-4 h-4 text-gray-400" />
-                                    {contact.email}
-                                </div>
+                                    <div className="text-sm text-gray-500 flex items-center gap-2 mb-6 truncate">
+                                        <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                        <span className="truncate">{contact.email}</span>
+                                    </div>
 
-                                <div className="text-xs text-gray-600 line-clamp-2 bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed">
-                                    <span className="font-semibold text-gray-900 block mb-1">Subject:</span>
-                                    {contact.generatedEmail.subject}
-                                </div>
-                            </Link>
+                                    <div className="text-xs text-gray-600 line-clamp-2 bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed h-20">
+                                        <span className="font-semibold text-gray-900 block mb-1">Subject:</span>
+                                        {contact.generatedEmail.subject}
+                                    </div>
+                                </Link>
+                            </div>
                         ))
                     )}
+                </div>
+            )}
+
+            {/* Bulk Actions Floating Bar */}
+            {selectedContacts.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white text-gray-900 px-6 py-4 rounded-2xl shadow-xl border border-gray-200 flex items-center gap-6 animate-in slide-in-from-bottom-4 duration-300 w-[90%] max-w-2xl">
+                    <div className="flex items-center gap-3 pr-6 border-r border-gray-200">
+                        <span className="bg-black text-white text-xs font-bold px-2 py-1 rounded-md">
+                            {selectedContacts.size}
+                        </span>
+                        <span className="text-sm font-medium text-gray-600">Selected</span>
+                    </div>
+
+                    <div className="flex items-center gap-4 flex-1">
+                        <div className="relative flex-1">
+                            <select
+                                value={targetFolderId}
+                                onChange={(e) => setTargetFolderId(e.target.value)}
+                                className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-black/5 cursor-pointer hover:bg-gray-100 transition-colors"
+                            >
+                                <option value="">Move to folder...</option>
+                                <option value="drafts">Drafts</option>
+                                <option value="sent">Sent</option>
+                                {folders.map(f => (
+                                    <option key={f.id} value={f.id}>{f.name}</option>
+                                ))}
+                            </select>
+                            <FolderInput className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        </div>
+
+                        {targetFolderId && (
+                            <button
+                                onClick={handleBulkMove}
+                                disabled={isMoving}
+                                className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+                            >
+                                {isMoving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Move"}
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="pl-6 border-l border-gray-200">
+                        <button
+                            onClick={handleBulkDelete}
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-colors flex items-center gap-2 text-sm font-medium"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">Delete</span>
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => setSelectedContacts(new Set())}
+                        className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md border border-gray-100 text-gray-400 hover:text-gray-600"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
                 </div>
             )}
         </div>
