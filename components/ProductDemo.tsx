@@ -114,13 +114,20 @@ export default function ProductDemo() {
                     <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4">
                         <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 flex items-center gap-2">
                             <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
-                            <div className="flex-1 h-2 bg-gray-200 rounded w-1/2"></div>
+                            <div className="flex-1 text-[8px] text-gray-500 font-medium truncate">takatera@g-advance.co.jp</div>
                         </div>
-                        <div className="p-3 space-y-2">
-                            <div className="h-2 bg-gray-100 rounded w-3/4"></div>
-                            <div className="h-2 bg-gray-100 rounded w-full"></div>
-                            <div className="h-2 bg-gray-100 rounded w-5/6"></div>
-                            <div className="h-2 bg-gray-100 rounded w-full"></div>
+                        <div className="p-3">
+                            <p className="text-[8px] font-bold text-gray-900 mb-1">面談のお礼</p>
+                            <div className="text-[7px] text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                GLOBAL ADVANCE CO.,LTD.
+                                MASATO TAKATERA様
+
+                                平素より大変お世話になっております。
+                                本日は貴重なお時間をいただき、誠にありがとうございました。
+
+                                貴社のビジョンに大変感銘を受けました。
+                                今後ともよろしくお願いいたします。
+                            </div>
                         </div>
                     </div>
 
