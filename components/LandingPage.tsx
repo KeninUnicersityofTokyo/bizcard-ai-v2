@@ -10,7 +10,7 @@ export default function LandingPage() {
         <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-gray-200">
             {/* Navbar */}
             <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-sm z-50 border-b border-gray-100">
-                <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+                <div className="w-full px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
                         <img src="/logo.png" alt="ReCard AI Logo" className="w-8 h-8 object-contain" />
                         ReCard AI
