@@ -105,7 +105,8 @@ function SidebarContent() {
             >
                 <div className="h-full flex flex-col p-6">
                     {/* Logo */}
-                    <div className="mb-8">
+                    <div className="mb-8 flex items-center gap-3">
+                        <img src="/logo.png" alt="BizCard AI Logo" className="w-8 h-8 object-contain" />
                         <h1 className="text-2xl font-bold tracking-tight">BizCard AI</h1>
                     </div>
 
