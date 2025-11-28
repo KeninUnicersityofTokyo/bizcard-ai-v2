@@ -38,7 +38,8 @@ export default function LandingPage() {
                         <span className="text-gray-400">reimagined with AI.</span>
                     </h1>
                     <p className="text-xl text-gray-500 max-w-xl mx-auto leading-relaxed">
-                        Scan cards, generate professional emails instantly, and manage your network with a simple, Notion-style interface.
+                        名刺をスキャンして、AIが下書きを自動生成。<br />
+                        Notionライクなシンプルさで、スマートに管理。
                     </p>
                     <div className="pt-4">
                         <button
@@ -60,22 +61,22 @@ export default function LandingPage() {
                         <FeatureCard
                             icon={<Smartphone className="w-6 h-6" />}
                             title="Instant Scanning"
-                            description="Upload a photo of any business card. Our AI extracts details with 99% accuracy."
+                            description="名刺を写真に撮るだけ。AIが連絡先情報を99%の精度で自動抽出します。"
                         />
                         <FeatureCard
                             icon={<Mail className="w-6 h-6" />}
                             title="AI Email Generation"
-                            description="Draft professional follow-up emails in seconds. Formal, casual, or custom tones."
+                            description="お礼メールやフォローアップを数秒で作成。フォーマルからカジュアルまで、相手に合わせたトーンで。"
                         />
                         <FeatureCard
                             icon={<FolderOpen className="w-6 h-6" />}
                             title="Smart Organization"
-                            description="Group contacts into folders. Keep your network organized and accessible."
+                            description="フォルダ分けで連絡先を整理。必要な情報をすぐに見つけられます。"
                         />
                         <FeatureCard
                             icon={<Shield className="w-6 h-6" />}
                             title="Secure & Private"
-                            description="Your data is encrypted and stored securely. You own your contacts."
+                            description="データは暗号化され安全に保存されます。あなたの連絡先はあなただけのものです。"
                         />
                     </div>
                 </div>
@@ -89,17 +90,17 @@ export default function LandingPage() {
                         <Step
                             number="01"
                             title="Scan a card"
-                            description="Take a photo of a business card. We'll automatically digitize the contact info."
+                            description="名刺の写真をアップロード。連絡先情報を自動でデジタル化します。"
                         />
                         <Step
                             number="02"
                             title="Add context"
-                            description="Voice record or type a quick note about where you met and what you discussed."
+                            description="「どこで会ったか」「何を話したか」を音声やテキストでメモ。AIがそれをメールに反映します。"
                         />
                         <Step
                             number="03"
                             title="Send follow-up"
-                            description="Review the AI-generated email draft and send it directly from your mail app."
+                            description="生成されたメール下書きを確認し、メーラーを起動して送信するだけ。"
                         />
                     </div>
                 </div>

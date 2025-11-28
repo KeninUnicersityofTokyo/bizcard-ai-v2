@@ -122,12 +122,12 @@ function DashboardContent() {
         if (!user) return;
 
         if (isTrash) {
-            if (confirm("Are you sure you want to PERMANENTLY delete this contact?")) {
+            if (confirm("この連絡先を完全に削除しますか？この操作は取り消せません。")) {
                 await permanentlyDeleteContact(user.uid, id);
                 removeFromSelection(id);
             }
         } else {
-            if (confirm("Move this contact to Trash?")) {
+            if (confirm("この連絡先をゴミ箱に移動しますか？")) {
                 await deleteContact(user.uid, id);
                 removeFromSelection(id);
             }
@@ -151,8 +151,8 @@ function DashboardContent() {
     const handleBulkDelete = async () => {
         if (!user) return;
         const message = isTrash
-            ? `Are you sure you want to PERMANENTLY delete ${selectedContacts.size} contacts?`
-            : `Are you sure you want to move ${selectedContacts.size} contacts to Trash?`;
+            ? `選択した ${selectedContacts.size} 件の連絡先を完全に削除しますか？`
+            : `選択した ${selectedContacts.size} 件の連絡先をゴミ箱に移動しますか？`;
 
         if (confirm(message)) {
             for (const id of Array.from(selectedContacts)) {
@@ -185,13 +185,11 @@ function DashboardContent() {
             setTargetFolderId("");
         } catch (error) {
             console.error("Error moving contacts:", error);
-            alert("Failed to move some contacts.");
+            alert("連絡先の移動に失敗しました。");
         } finally {
             setIsMoving(false);
         }
     };
-
-    // ... imports ...
 
     if (loading) {
         return (
@@ -272,7 +270,7 @@ function DashboardContent() {
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                 {isTrash ? <Trash2 className="w-8 h-8 text-gray-300" /> : <User className="w-8 h-8 text-gray-300" />}
                             </div>
-                            <p className="text-gray-500 font-medium">{isTrash ? "Trash is empty" : "No contacts found"}</p>
+                            <p className="text-gray-500 font-medium">{isTrash ? "ゴミ箱は空です" : "連絡先が見つかりません"}</p>
                         </div>
                     ) : (
                         filteredContacts.map((contact) => (

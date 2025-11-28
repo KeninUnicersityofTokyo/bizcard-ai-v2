@@ -85,13 +85,13 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
         if (!user || !contact) return;
 
         if (contact.folderId === "trash") {
-            if (confirm("Are you sure you want to PERMANENTLY delete this contact? This cannot be undone.")) {
+            if (confirm("この連絡先を完全に削除しますか？この操作は取り消せません。")) {
                 setIsDeleting(true);
                 await permanentlyDeleteContact(user.uid, contact.id);
                 router.push("/?folderId=trash");
             }
         } else {
-            if (confirm("Move this contact to Trash?")) {
+            if (confirm("この連絡先をゴミ箱に移動しますか？")) {
                 setIsDeleting(true);
                 await deleteContact(user.uid, contact.id);
                 router.push("/");
