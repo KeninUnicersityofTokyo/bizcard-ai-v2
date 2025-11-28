@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: "Scan business cards and generate AI emails instantly.",
 };
 
-import Sidebar from "@/components/Sidebar";
+import MainLayout from "@/components/MainLayout";
 import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({
@@ -24,14 +24,9 @@ export default function RootLayout({
                 className={`${inter.className} antialiased bg-white text-gray-900`}
             >
                 <AuthProvider>
-                    <div className="flex min-h-screen">
-                        <Suspense fallback={<div className="w-72 bg-white border-r border-gray-100 hidden lg:block" />}>
-                            <Sidebar />
-                        </Suspense>
-                        <main className="flex-1 p-4 md:p-8 overflow-y-auto lg:ml-72">
-                            {children}
-                        </main>
-                    </div>
+                    <MainLayout>
+                        {children}
+                    </MainLayout>
                 </AuthProvider>
             </body>
         </html>

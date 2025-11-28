@@ -17,7 +17,7 @@ export default function LandingPage() {
                     </div>
                     <button
                         onClick={signInWithGoogle}
-                        className="text-sm font-medium text-gray-600 hover:text-black transition-colors"
+                        className="bg-black text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all shadow-sm hover:shadow-md"
                     >
                         Log in
                     </button>
