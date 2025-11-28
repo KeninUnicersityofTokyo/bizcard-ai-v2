@@ -40,15 +40,6 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     useEffect(() => {
         if (user) {
             getFolders(user.uid).then(setFolders);
-            // Fetch and append signature if body doesn't already have it
-            getSignature(user.uid).then(sig => {
-                if (sig && !data.body.includes(sig)) {
-                    setData(prev => ({
-                        ...prev,
-                        body: prev.body + "\n\n" + sig
-                    }));
-                }
-            });
         }
     }, [user]); // Only run on mount/user change
 

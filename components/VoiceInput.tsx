@@ -43,7 +43,9 @@ export default function VoiceInput({ onContextChange }: VoiceInputProps) {
                 recognitionRef.current.onerror = (event: any) => {
                     console.error("Speech recognition error", event.error);
                     if (event.error === 'not-allowed') {
-                        setError("マイクの使用が許可されていません。");
+                        setError("マイクの使用が許可されていません。ブラウザの設定を確認してください。");
+                    } else if (event.error === 'service-not-allowed') {
+                        setError("このブラウザでは音声認識が利用できません。SafariやChromeなど、標準ブラウザでお試しください（アプリ内ブラウザでは動作しない場合があります）。");
                     } else if (event.error === 'no-speech') {
                         // Ignore no-speech error as it just means silence
                         return;

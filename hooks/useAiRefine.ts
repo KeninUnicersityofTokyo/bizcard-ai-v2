@@ -28,6 +28,11 @@ export function useAiRefine(currentBody: string, onUpdate: (newBody: string) => 
 
                 recognitionRef.current.onerror = (event: any) => {
                     console.error("Speech recognition error", event.error);
+                    if (event.error === 'service-not-allowed') {
+                        alert("このブラウザでは音声認識が利用できません。標準ブラウザ（Safari/Chrome）でお試しください。");
+                    } else if (event.error === 'not-allowed') {
+                        alert("マイクの使用が許可されていません。");
+                    }
                     setIsRecording(false);
                 };
 

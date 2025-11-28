@@ -26,8 +26,7 @@ export async function refineEmail(currentBody: string, instruction: string) {
           "${instruction}"
 
           ## ルール
-          - 指示内容を的確に反映させてください。
-          - ビジネスメールとして自然な表現にしてください。
+          - 指示内容のみを反映し、それ以外の部分は極力維持してください。
           - 署名は含めないでください（本文のみ）。
           - JSON形式で出力してください。
 

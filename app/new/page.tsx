@@ -8,7 +8,7 @@ import EmailPreview from "@/components/EmailPreview";
 import { generateEmail } from "@/actions/generateEmail";
 import { extractContactDetails } from "@/actions/extractContactDetails";
 import { useAuth } from "@/context/AuthContext";
-import { saveContact } from "@/lib/db";
+import { saveContact, getSignature } from "@/lib/db";
 
 import { Loader2, Sparkles, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -21,12 +21,22 @@ export default function NewContactPage() {
     const [context, setContext] = useState("");
     const [platform, setPlatform] = useState<"email" | "linkedin" | "slack">("email");
     const [tone, setTone] = useState<"3" | "2" | "1">("2");
+    const [signature, setSignature] = useState("");
     const [manualDetails, setManualDetails] = useState({ name: "", company: "", email: "" });
     const [isManualMode, setIsManualMode] = useState(false);
     const [isManualDetailsOpen, setIsManualDetailsOpen] = useState(false);
     const [generatedEmail, setGeneratedEmail] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Fetch signature on mount
+    useState(() => {
+        if (user) {
+            getSignature(user.uid).then(sig => {
+                if (sig) setSignature(sig);
+            });
+        }
+    });
 
     const handleImageSelected = async (base64: string) => {
         setImage(base64);
@@ -75,6 +85,12 @@ export default function NewContactPage() {
                 platform,
                 tone
             );
+
+            // Append signature if exists
+            if (signature) {
+                result.body += `\n\n${signature}`;
+            }
+
             setGeneratedEmail(result);
             setStep(3);
         } catch (error: any) {
@@ -250,6 +266,17 @@ export default function NewContactPage() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Signature Input */}
+                        <div className="mb-8">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Signature (署名)</label>
+                            <textarea
+                                value={signature}
+                                onChange={(e) => setSignature(e.target.value)}
+                                className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all h-24 resize-none text-sm"
+                                placeholder={`例:\n株式会社〇〇\n営業部 山田太郎\nEmail: ...`}
+                            />
                         </div>
 
                         <div className="mb-8">
