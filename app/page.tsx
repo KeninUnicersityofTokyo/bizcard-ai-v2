@@ -23,6 +23,8 @@ import { useAuth } from "@/context/AuthContext";
 import {
     getContacts,
     getContactsByFolder,
+    subscribeToContacts,
+    subscribeToContactsByFolder,
     deleteContact,
     updateContact,
     getFolders,
