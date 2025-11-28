@@ -27,10 +27,28 @@ export default function NewContactPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleImageSelected = (base64: string) => {
+    const handleImageSelected = async (base64: string) => {
         setImage(base64);
-        setStep(2);
         setError(null);
+        setIsLoading(true);
+
+        try {
+            // Auto-scan with default settings
+            const result = await generateEmail(
+                base64,
+                "", // Default context
+                undefined,
+                "email", // Default platform
+                "2" // Default tone
+            );
+            setGeneratedEmail(result);
+            setStep(3);
+        } catch (error: any) {
+            console.error(error);
+            setError(error.message || "予期せぬエラーが発生しました。");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSkipToManual = () => {
@@ -68,17 +86,6 @@ export default function NewContactPage() {
             return false;
         }
 
-        // Check image size (Firestore limit is 1MB)
-        let imageToSave = image;
-        if (image && image.length > 1000000) {
-            const confirmSave = confirm("画像サイズが大きすぎるため、保存に時間がかかるか、失敗する可能性があります。\n画像なしで保存しますか？");
-            if (confirmSave) {
-                imageToSave = null;
-            } else {
-                return false;
-            }
-        }
-
         try {
             // Fire and forget - don't await the result for UI responsiveness
             saveContact(user.uid, {
@@ -87,7 +94,7 @@ export default function NewContactPage() {
                 company: isManualMode ? manualDetails.company : "Unknown",
                 email: emailData.email,
                 context,
-                imageBase64: imageToSave || null,
+                imageBase64: null, // Never save image as per user request
                 generatedEmail: {
                     subject: emailData.subject,
                     body: emailData.body,
@@ -130,17 +137,27 @@ export default function NewContactPage() {
                         <span className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md">1</span>
                         <span className="text-xl font-bold text-gray-900">Scan Business Card</span>
                     </div>
-                    <ImageUploader onImageSelected={handleImageSelected} />
 
-                    <div className="text-center mt-6">
-                        <p className="text-slate-500 text-sm mb-2">- または -</p>
-                        <button
-                            onClick={handleSkipToManual}
-                            className="text-gray-500 hover:text-black text-sm font-medium underline underline-offset-4 transition-colors"
-                        >
-                            Enter details manually
-                        </button>
-                    </div>
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <Loader2 className="w-10 h-10 animate-spin text-black" />
+                            <p className="text-gray-500 font-medium">Scanning & Generating...</p>
+                        </div>
+                    ) : (
+                        <ImageUploader onImageSelected={handleImageSelected} />
+                    )}
+
+                    {!isLoading && (
+                        <div className="text-center mt-6">
+                            <p className="text-slate-500 text-sm mb-2">- または -</p>
+                            <button
+                                onClick={handleSkipToManual}
+                                className="text-gray-500 hover:text-black text-sm font-medium underline underline-offset-4 transition-colors"
+                            >
+                                Enter details manually
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Step 2: Voice Input & Manual Details */}

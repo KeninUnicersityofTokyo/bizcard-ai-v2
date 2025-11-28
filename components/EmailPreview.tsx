@@ -179,11 +179,22 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl opacity-75 blur-sm animate-pulse"></div>
                     )}
 
+                    {/* AI Refine Loading Overlay */}
+                    {isRefining && (
+                        <div className="absolute inset-0 z-20 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl transition-all duration-300">
+                            <div className="flex flex-col items-center gap-3">
+                                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                                <span className="text-sm font-medium text-purple-600 animate-pulse">AI is refining your draft...</span>
+                            </div>
+                        </div>
+                    )}
+
                     <textarea
                         value={data.body}
                         onChange={(e) => handleChange("body", e.target.value)}
+                        disabled={isRefining}
                         className={`relative w-full h-72 py-4 px-4 bg-white outline-none text-gray-800 text-sm leading-relaxed resize-none rounded-xl transition-all duration-300 ${isRecording ? "bg-white" : "bg-transparent"
-                            } `}
+                            } ${isRefining ? "opacity-50 cursor-not-allowed" : ""}`}
                         placeholder="Write your message..."
                     />
 
