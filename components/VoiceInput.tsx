@@ -83,7 +83,7 @@ export default function VoiceInput({ onContextChange }: VoiceInputProps) {
         <div className="w-full max-w-xl mx-auto p-6 bg-white rounded-2xl shadow-sm border border-gray-200 mt-6">
             <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <Mic className="w-5 h-5 text-gray-900" />
-                音声入力 / メモ
+                Context
             </h2>
 
             <div className="mb-4">
