@@ -108,7 +108,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
         <div className="w-full max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden font-sans">
             {/* Header */}
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-700">New Message</span>
+                <span className="text-sm font-semibold text-gray-700">新規メッセージ</span>
                 <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
                     <div className="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
@@ -118,7 +118,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
             <div className="p-6 space-y-4">
                 {/* To */}
                 <div className="flex items-center border-b border-gray-100 pb-2">
-                    <span className="text-gray-400 text-sm w-16 font-medium">To</span>
+                    <span className="text-gray-400 text-sm w-16 font-medium">宛先</span>
                     <input
                         type="email"
                         value={data.email}
@@ -162,13 +162,13 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
 
                 {/* Subject */}
                 <div className="flex items-center border-b border-gray-100 pb-2">
-                    <span className="text-gray-400 text-sm w-16 font-medium">Subject</span>
+                    <span className="text-gray-400 text-sm w-16 font-medium">件名</span>
                     <input
                         type="text"
                         value={data.subject}
                         onChange={(e) => handleChange("subject", e.target.value)}
                         className="flex-1 bg-transparent outline-none text-gray-900 font-semibold text-sm"
-                        placeholder="Subject"
+                        placeholder="件名を入力"
                     />
                 </div>
 
@@ -184,7 +184,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         <div className="absolute inset-0 z-20 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-xl transition-all duration-300">
                             <div className="flex flex-col items-center gap-3">
                                 <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-                                <span className="text-sm font-medium text-purple-600 animate-pulse">AI is refining your draft...</span>
+                                <span className="text-sm font-medium text-purple-600 animate-pulse">AIが修正中...</span>
                             </div>
                         </div>
                     )}
@@ -195,7 +195,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         disabled={isRefining}
                         className={`relative w-full h-72 py-4 px-4 bg-white outline-none text-gray-800 text-sm leading-relaxed resize-none rounded-xl transition-all duration-300 ${isRecording ? "bg-white" : "bg-transparent"
                             } ${isRefining ? "opacity-50 cursor-not-allowed" : ""}`}
-                        placeholder="Write your message..."
+                        placeholder="メッセージを入力..."
                     />
 
                     {/* AI Refinement Button */}
@@ -221,7 +221,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                                 <Sparkles className="w-5 h-5 text-purple-500" />
                             )}
                             <span className="text-sm font-semibold tracking-wide">
-                                {isRefining ? "Refining..." : isRecording ? "Listening..." : "AI Refine"}
+                                {isRefining ? "修正中..." : isRecording ? "聞き取り中..." : "AI Refine"}
                             </span>
                         </button>
                     </div>
@@ -235,7 +235,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         onClick={handleOpenMailer}
                         className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold text-sm shadow-sm transition-all flex items-center gap-2"
                     >
-                        Send
+                        送信
                         <Send className="w-4 h-4" />
                     </button>
                     <div className="h-6 w-px bg-gray-300 mx-1"></div>
@@ -244,7 +244,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         onChange={(e) => setSelectedFolderId(e.target.value)}
                         className="p-2 bg-transparent text-sm text-gray-600 font-medium outline-none cursor-pointer hover:text-gray-900"
                     >
-                        <option value="drafts">Drafts</option>
+                        <option value="drafts">下書き</option>
                         {folders.map((f) => (
                             <option key={f.id} value={f.id}>
                                 {f.name}
@@ -261,14 +261,14 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                             ? "bg-green-100 text-green-700 px-4"
                             : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
                             } disabled: opacity - 100`}
-                        title="Save Draft"
+                        title="下書きを保存"
                     >
                         {isSaving ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : isSuccess ? (
                             <>
                                 <Check className="w-5 h-5" />
-                                <span className="text-sm font-bold">Saved!</span>
+                                <span className="text-sm font-bold">保存完了!</span>
                             </>
                         ) : (
                             <Save className="w-5 h-5" />

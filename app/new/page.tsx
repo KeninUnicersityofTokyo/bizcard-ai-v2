@@ -33,13 +33,13 @@ export default function NewContactPage() {
         setIsLoading(true);
 
         try {
-            // Auto-scan with default settings
+            // Auto-scan with selected settings
             const result = await generateEmail(
                 base64,
                 "", // Default context
                 undefined,
-                "email", // Default platform
-                "2" // Default tone
+                platform, // Use selected platform
+                tone // Use selected tone
             );
             setGeneratedEmail(result);
             setStep(3);
@@ -121,7 +121,7 @@ export default function NewContactPage() {
                 <Link href="/" className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6 text-gray-900" />
                 </Link>
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">New Contact</h1>
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">新規コンタクト</h1>
             </header>
 
             {error && (
@@ -131,17 +131,55 @@ export default function NewContactPage() {
             )}
 
             <div className="space-y-8">
-                {/* Step 1: Image Upload */}
+                {/* Step 1: Settings & Image Upload */}
                 <div className={`transition-all duration-500 ${step === 1 && !isManualMode ? "opacity-100" : "hidden"}`}>
                     <div className="flex items-center gap-3 mb-6">
                         <span className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md">1</span>
-                        <span className="text-xl font-bold text-gray-900">Scan Business Card</span>
+                        <span className="text-xl font-bold text-gray-900">名刺をスキャン</span>
+                    </div>
+
+                    {/* Settings: Platform & Tone */}
+                    <div className="grid grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">プラットフォーム</label>
+                            <div className="relative">
+                                <select
+                                    value={platform}
+                                    onChange={(e) => setPlatform(e.target.value as any)}
+                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black outline-none appearance-none font-medium"
+                                >
+                                    <option value="email">メール</option>
+                                    <option value="linkedin">LinkedIn / SNS</option>
+                                    <option value="slack">Slack / チャット</option>
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">トーン（丁寧さ）</label>
+                            <div className="relative">
+                                <select
+                                    value={tone}
+                                    onChange={(e) => setTone(e.target.value as any)}
+                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black outline-none appearance-none font-medium"
+                                >
+                                    <option value="3">超丁寧 (Lv.3)</option>
+                                    <option value="2">丁寧 (Lv.2)</option>
+                                    <option value="1">フランク (Lv.1)</option>
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-gray-50 rounded-2xl border border-gray-100">
                             <Loader2 className="w-10 h-10 animate-spin text-black" />
-                            <p className="text-gray-500 font-medium">Scanning & Generating...</p>
+                            <p className="text-gray-500 font-medium">スキャン & 生成中...</p>
                         </div>
                     ) : (
                         <ImageUploader onImageSelected={handleImageSelected} />
@@ -154,7 +192,7 @@ export default function NewContactPage() {
                                 onClick={handleSkipToManual}
                                 className="text-gray-500 hover:text-black text-sm font-medium underline underline-offset-4 transition-colors"
                             >
-                                Enter details manually
+                                手動で詳細を入力
                             </button>
                         </div>
                     )}
@@ -171,17 +209,17 @@ export default function NewContactPage() {
                             >
                                 <div className="flex items-center gap-3">
                                     <span className="bg-black text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">i</span>
-                                    <span className="font-bold text-gray-900">Contact Details</span>
+                                    <span className="font-bold text-gray-900">連絡先詳細</span>
                                 </div>
                                 <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                    {isManualDetailsOpen ? "Close" : "Edit"}
+                                    {isManualDetailsOpen ? "閉じる" : "編集"}
                                 </span>
                             </button>
 
                             {isManualDetailsOpen && (
                                 <div className="p-6 space-y-5 border-t border-gray-200">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Company</label>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">会社名</label>
                                         <input
                                             type="text"
                                             value={manualDetails.company}
@@ -190,7 +228,7 @@ export default function NewContactPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Name</label>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">名前</label>
                                         <input
                                             type="text"
                                             value={manualDetails.name}
@@ -199,7 +237,7 @@ export default function NewContactPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email</label>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">メールアドレス</label>
                                         <input
                                             type="email"
                                             value={manualDetails.email}
@@ -213,45 +251,7 @@ export default function NewContactPage() {
 
                         <div className="flex items-center gap-3 mb-6">
                             <span className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md">2</span>
-                            <span className="text-xl font-bold text-gray-900">Preferences & Context</span>
-                        </div>
-
-                        {/* Settings: Platform & Tone */}
-                        <div className="grid grid-cols-2 gap-6 mb-8">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Platform</label>
-                                <div className="relative">
-                                    <select
-                                        value={platform}
-                                        onChange={(e) => setPlatform(e.target.value as any)}
-                                        className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black outline-none appearance-none"
-                                    >
-                                        <option value="email">Email</option>
-                                        <option value="linkedin">LinkedIn</option>
-                                        <option value="slack">Slack / Chat</option>
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tone</label>
-                                <div className="relative">
-                                    <select
-                                        value={tone}
-                                        onChange={(e) => setTone(e.target.value as any)}
-                                        className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black outline-none appearance-none"
-                                    >
-                                        <option value="3">Formal (Lv.3)</option>
-                                        <option value="2">Standard (Lv.2)</option>
-                                        <option value="1">Casual (Lv.1)</option>
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
-                            </div>
+                            <span className="text-xl font-bold text-gray-900">コンテキスト（背景情報）</span>
                         </div>
 
                         <VoiceInput onContextChange={setContext} />
@@ -264,12 +264,12 @@ export default function NewContactPage() {
                             {isLoading ? (
                                 <>
                                     <Loader2 className="w-6 h-6 animate-spin" />
-                                    Generating...
+                                    生成中...
                                 </>
                             ) : (
                                 <>
                                     <Sparkles className="w-6 h-6" />
-                                    Generate Draft
+                                    下書きを生成
                                 </>
                             )}
                         </button>
@@ -281,7 +281,7 @@ export default function NewContactPage() {
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex items-center gap-3 mb-6">
                             <span className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md">3</span>
-                            <span className="text-xl font-bold text-gray-900">Review & Save</span>
+                            <span className="text-xl font-bold text-gray-900">確認 & 保存</span>
                         </div>
                         <EmailPreview
                             initialData={generatedEmail}
@@ -300,7 +300,7 @@ export default function NewContactPage() {
                             }}
                             className="w-full mt-8 py-3 text-gray-400 hover:text-gray-900 text-sm font-medium transition-colors"
                         >
-                            Start Over
+                            最初からやり直す
                         </button>
                     </div>
                 )}
