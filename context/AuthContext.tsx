@@ -13,7 +13,7 @@ import { auth } from "@/lib/firebase";
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    signInWithGoogle: () => Promise<void>;
+    signInWithGoogle: (options?: { forceSelection?: boolean }) => Promise<void>;
     signOut: () => Promise<void>;
 }
 
@@ -36,8 +36,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => unsubscribe();
     }, []);
 
-    const signInWithGoogle = async () => {
+    interface SignInOptions {
+        forceSelection?: boolean;
+    }
+
+    const signInWithGoogle = async (options?: SignInOptions) => {
         const provider = new GoogleAuthProvider();
+        if (options?.forceSelection) {
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+        }
         try {
             await signInWithPopup(auth, provider);
         } catch (error) {
