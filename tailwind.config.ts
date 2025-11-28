@@ -15,12 +15,18 @@ const config: Config = {
             },
             animation: {
                 "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
+                "spin-slow": "spin 3s linear infinite",
+                "scan": "scan 2s ease-in-out infinite",
             },
             keyframes: {
                 "border-beam": {
                     "100%": {
                         "offset-distance": "100%",
                     },
+                },
+                "scan": {
+                    "0%, 100%": { top: "0%" },
+                    "50%": { top: "100%" },
                 },
             },
         },

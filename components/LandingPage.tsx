@@ -60,7 +60,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* Product Demo Animation */}
-                    <div className="relative mx-auto lg:mr-0">
+                    <div className="relative mx-auto lg:mr-0 w-full max-w-[320px]">
                         <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-[3.5rem] opacity-20 blur-2xl animate-pulse"></div>
                         <ProductDemo />
                     </div>

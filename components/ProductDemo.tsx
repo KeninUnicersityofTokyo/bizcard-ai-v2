@@ -58,7 +58,7 @@ export default function ProductDemo() {
 
                         {/* Scan Line */}
                         {step === "scan" && (
-                            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-[scan_2s_ease-in-out_infinite]" />
+                            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-scan" />
                         )}
                     </div>
 
