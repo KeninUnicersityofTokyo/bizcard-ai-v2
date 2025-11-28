@@ -17,7 +17,7 @@ export default function LandingPage() {
                         ReCard AI
                     </div>
                     <button
-                        onClick={signInWithGoogle}
+                        onClick={() => signInWithGoogle()}
                         className="bg-black text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all shadow-sm hover:shadow-md"
                     >
                         Log in
@@ -43,7 +43,7 @@ export default function LandingPage() {
                         </p>
                         <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                             <button
-                                onClick={signInWithGoogle}
+                                onClick={() => signInWithGoogle()}
                                 className="group inline-flex items-center justify-center gap-2 bg-black text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                             >
                                 Get Started
@@ -124,7 +124,7 @@ export default function LandingPage() {
                 <div className="max-w-3xl mx-auto text-center space-y-8">
                     <h2 className="text-3xl font-bold">Ready to upgrade your networking?</h2>
                     <button
-                        onClick={signInWithGoogle}
+                        onClick={() => signInWithGoogle()}
                         className="inline-flex items-center gap-2 bg-black text-white px-8 py-4 rounded-xl font-medium text-lg hover:bg-gray-800 transition-all shadow-lg"
                     >
                         Start for free
