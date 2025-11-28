@@ -1,53 +1,87 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Folder as FolderIcon, Plus, Trash2, Menu, X, Inbox, Send } from "lucide-react";
-import { Folder } from "@/types";
-import { getFolders, createFolder, deleteFolder } from "@/lib/db";
-
+import {
+    LayoutDashboard,
+    Plus,
+    LogOut,
+    Menu,
+    X,
+    Folder as FolderIcon,
+    Trash2,
+    Send,
+    Settings
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { Folder } from "@/types";
+import { createFolder, deleteFolder, getFolders } from "@/lib/db";
+import SignatureModal from "./SignatureModal";
 
-export default function Sidebar() {
+const NavItem = ({ href, icon: Icon, label, active, onDelete, onClick }: any) => (
+    <Link
+        href={href}
+        className={`flex items-center justify-between p-3 rounded-xl mb-1 transition-all duration-200 ${active
+            ? "bg-gray-100 text-gray-900 font-semibold"
+            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+            }`}
+        onClick={onClick}
+    >
+        <div className="flex items-center gap-3">
+            <Icon className={`w-5 h-5 ${active ? "text-gray-900" : "text-gray-400"}`} />
+            <span className="text-sm">{label}</span>
+        </div>
+        {onDelete && (
+            <button
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete();
+                }}
+                className="p-1.5 text-gray-400 hover:bg-gray-200 hover:text-red-600 rounded-lg transition-colors"
+            >
+                <Trash2 className="w-4 h-4" />
+            </button>
+        )}
+    </Link>
+);
+
+function SidebarContent() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const { user, signInWithGoogle, signOut } = useAuth();
+    const currentFolderId = searchParams.get("folderId");
+    const { user, signOut } = useAuth();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
-    const [isCreating, setIsCreating] = useState(false);
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
 
     useEffect(() => {
         if (user) {
             getFolders(user.uid).then(setFolders);
-        } else {
-            setFolders([]);
         }
     }, [user]);
 
-    const handleCreateFolder = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newFolderName.trim() || !user) return;
-
+    const handleCreateFolder = async () => {
+        if (!user || !newFolderName.trim()) return;
         try {
             const newFolder = await createFolder(user.uid, newFolderName);
             setFolders([...folders, newFolder]);
             setNewFolderName("");
-            setIsCreating(false);
             setIsCreatingFolder(false);
         } catch (error) {
             console.error("Error creating folder:", error);
         }
     };
 
-    const handleDeleteFolder = async (id: string) => {
+    const handleDeleteFolder = async (folderId: string) => {
         if (!user) return;
-        if (confirm("フォルダを削除しますか？中の連絡先はInboxに移動します。")) {
+        if (confirm("Are you sure you want to delete this folder?")) {
             try {
-                await deleteFolder(user.uid, id);
-                setFolders(folders.filter((f) => f.id !== id));
+                await deleteFolder(user.uid, folderId);
+                setFolders(folders.filter((f) => f.id !== folderId));
             } catch (error) {
                 console.error("Error deleting folder:", error);
             }
@@ -96,6 +130,7 @@ export default function Sidebar() {
                                 icon={LayoutDashboard}
                                 label="All Contacts"
                                 active={pathname === "/" && !currentFolderId}
+                                onClick={() => setIsMobileOpen(false)}
                             />
                         </div>
 
@@ -117,12 +152,14 @@ export default function Sidebar() {
                                 icon={FolderIcon}
                                 label="Drafts"
                                 active={currentFolderId === "drafts"}
+                                onClick={() => setIsMobileOpen(false)}
                             />
                             <NavItem
                                 href="/?folderId=sent"
                                 icon={Send}
                                 label="Sent"
                                 active={currentFolderId === "sent"}
+                                onClick={() => setIsMobileOpen(false)}
                             />
 
                             {folders.map((folder) => (
@@ -133,6 +170,7 @@ export default function Sidebar() {
                                     label={folder.name}
                                     active={currentFolderId === folder.id}
                                     onDelete={() => handleDeleteFolder(folder.id)}
+                                    onClick={() => setIsMobileOpen(false)}
                                 />
                             ))}
 
@@ -186,6 +224,19 @@ export default function Sidebar() {
                     </div>
                 </div>
             </aside>
+
+            <SignatureModal
+                isOpen={isSignatureModalOpen}
+                onClose={() => setIsSignatureModalOpen(false)}
+            />
         </>
+    );
+}
+
+export default function Sidebar() {
+    return (
+        <Suspense fallback={<div className="w-72 bg-gray-50 border-r border-gray-200 hidden lg:block" />}>
+            <SidebarContent />
+        </Suspense>
     );
 }

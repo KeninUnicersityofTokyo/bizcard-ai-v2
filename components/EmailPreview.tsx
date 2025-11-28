@@ -1,4 +1,3 @@
-```javascript
 "use client";
 
 import { useState, useEffect } from "react";
@@ -58,7 +57,7 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
     };
 
     const handleCopy = () => {
-        const text = `宛先: ${ data.email } \nCC: ${ data.cc || "" } \nBCC: ${ data.bcc || "" } \n件名: ${ data.subject } \n\n${ data.body } `;
+        const text = `宛先: ${data.email} \nCC: ${data.cc || ""} \nBCC: ${data.bcc || ""} \n件名: ${data.subject} \n\n${data.body} `;
         navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -74,10 +73,10 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                 // Open Mailer
                 const subject = encodeURIComponent(data.subject);
                 const body = encodeURIComponent(data.body);
-                const cc = data.cc ? `& cc=${ encodeURIComponent(data.cc) } ` : "";
-                const bcc = data.bcc ? `& bcc=${ encodeURIComponent(data.bcc) } ` : "";
+                const cc = data.cc ? `& cc=${encodeURIComponent(data.cc)} ` : "";
+                const bcc = data.bcc ? `& bcc=${encodeURIComponent(data.bcc)} ` : "";
 
-                window.location.href = `mailto:${ data.email }?subject = ${ subject }& body=${ body }${ cc }${ bcc } `;
+                window.location.href = `mailto:${data.email}?subject = ${subject}& body=${body}${cc}${bcc} `;
 
                 // Navigate (via onSaveSuccess)
                 setTimeout(() => {
@@ -183,9 +182,8 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     <textarea
                         value={data.body}
                         onChange={(e) => handleChange("body", e.target.value)}
-                        className={`relative w - full h - 72 py - 4 px - 4 bg - white outline - none text - gray - 800 text - sm leading - relaxed resize - none rounded - xl transition - all duration - 300 ${
-    isRecording ? "bg-white" : "bg-transparent"
-} `}
+                        className={`relative w - full h - 72 py - 4 px - 4 bg - white outline - none text - gray - 800 text - sm leading - relaxed resize - none rounded - xl transition - all duration - 300 ${isRecording ? "bg-white" : "bg-transparent"
+                            } `}
                         placeholder="Write your message..."
                     />
 
@@ -194,13 +192,12 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         <button
                             onClick={toggleRecording}
                             disabled={isRefining}
-                            className={`flex items - center gap - 3 px - 6 py - 3 rounded - full shadow - lg transition - all duration - 300 backdrop - blur - md border border - white / 20 ${
-    isRecording
-        ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
-        : isRefining
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
-} `}
+                            className={`flex items - center gap - 3 px - 6 py - 3 rounded - full shadow - lg transition - all duration - 300 backdrop - blur - md border border - white / 20 ${isRecording
+                                    ? "bg-gradient-to-r from-red-500 to-pink-600 text-white scale-105 shadow-red-500/30"
+                                    : isRefining
+                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                        : "bg-white/90 text-gray-700 hover:bg-white hover:scale-105 hover:shadow-xl hover:text-gray-900 shadow-gray-200/50"
+                                } `}
                         >
                             {isRefining ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -249,11 +246,10 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     <button
                         onClick={handleSaveClick}
                         disabled={isSaving || isSuccess}
-                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${
-    isSuccess
-        ? "bg-green-100 text-green-700 px-4"
-        : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
-} disabled: opacity - 100`}
+                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${isSuccess
+                                ? "bg-green-100 text-green-700 px-4"
+                                : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
+                            } disabled: opacity - 100`}
                         title="Save Draft"
                     >
                         {isSaving ? (
