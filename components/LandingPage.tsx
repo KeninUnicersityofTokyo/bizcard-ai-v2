@@ -37,7 +37,7 @@ export default function LandingPage() {
                     </h1>
                     <p className="text-xl text-gray-500 max-w-xl mx-auto leading-relaxed">
                         名刺をスキャンして、AIが下書きを自動生成。<br />
-                        Notionライクなシンプルさで、スマートに管理。
+                        直感的なシンプルさで、スマートに管理。
                     </p>
                     <div className="pt-4">
                         <button
@@ -52,7 +52,7 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Feature Grid (Notion Style) */}
+            {/* Feature Grid */}
             <section className="py-20 px-6 bg-gray-50/50">
                 <div className="max-w-5xl mx-auto">
                     <div className="grid md:grid-cols-2 gap-8">
