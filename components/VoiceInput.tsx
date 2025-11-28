@@ -83,7 +83,7 @@ export default function VoiceInput({ onContextChange }: VoiceInputProps) {
         <div className="w-full max-w-xl mx-auto p-6 bg-white rounded-2xl shadow-sm border border-gray-200 mt-6">
             <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <Mic className="w-5 h-5 text-gray-900" />
-                Voice Input
+                音声入力 / メモ
             </h2>
 
             <div className="mb-4">
@@ -97,12 +97,12 @@ export default function VoiceInput({ onContextChange }: VoiceInputProps) {
                     {isRecording ? (
                         <>
                             <MicOff className="w-6 h-6" />
-                            <span className="font-bold">Stop Recording</span>
+                            <span className="font-bold">録音停止</span>
                         </>
                     ) : (
                         <>
                             <Mic className="w-6 h-6" />
-                            <span className="font-bold">Start Recording</span>
+                            <span className="font-bold">録音開始</span>
                         </>
                     )}
                 </button>
@@ -118,7 +118,7 @@ export default function VoiceInput({ onContextChange }: VoiceInputProps) {
             <textarea
                 value={text}
                 onChange={handleTextChange}
-                placeholder="Example: Met at a cafe in Shibuya. Talked about saunas. Need to send materials next week."
+                placeholder="例: 渋谷のカフェで会った。サウナの話で盛り上がった。来週資料を送る必要がある。"
                 className="w-full h-32 p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-200 focus:border-transparent resize-none outline-none transition-all"
             />
         </div>

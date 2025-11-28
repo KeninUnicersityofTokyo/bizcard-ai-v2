@@ -36,7 +36,7 @@ export default function NewContactPage() {
             // Auto-scan with selected settings
             const result = await generateEmail(
                 base64,
-                "", // Default context
+                context, // Use entered context
                 undefined,
                 platform, // Use selected platform
                 tone // Use selected tone
@@ -176,6 +176,10 @@ export default function NewContactPage() {
                         </div>
                     </div>
 
+                    <div className="mb-8">
+                        <VoiceInput onContextChange={setContext} />
+                    </div>
+
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 space-y-4 bg-gray-50 rounded-2xl border border-gray-100">
                             <Loader2 className="w-10 h-10 animate-spin text-black" />
@@ -248,13 +252,6 @@ export default function NewContactPage() {
                                 </div>
                             )}
                         </div>
-
-                        <div className="flex items-center gap-3 mb-6">
-                            <span className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md">2</span>
-                            <span className="text-xl font-bold text-gray-900">コンテキスト（背景情報）</span>
-                        </div>
-
-                        <VoiceInput onContextChange={setContext} />
 
                         <button
                             onClick={handleGenerate}

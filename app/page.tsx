@@ -97,7 +97,8 @@ function DashboardContent() {
     const filteredContacts = contacts.filter(
         (c) =>
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.company.toLowerCase().includes(searchTerm.toLowerCase())
+            c.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const toggleSelect = (id: string) => {
