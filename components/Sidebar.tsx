@@ -17,7 +17,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { Folder } from "@/types";
 import { createFolder, deleteFolder, getFolders } from "@/lib/db";
-import SignatureModal from "./SignatureModal";
+import SettingsModal from "./SettingsModal";
+import { useLanguage } from "@/context/LanguageContext";
 
 const NavItem = ({ href, icon: Icon, label, active, onDelete, onClick }: any) => (
     <Link
@@ -52,11 +53,12 @@ function SidebarContent() {
     const searchParams = useSearchParams();
     const currentFolderId = searchParams.get("folderId");
     const { user, signOut } = useAuth();
+    const { t } = useLanguage();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-    const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -78,7 +80,7 @@ function SidebarContent() {
 
     const handleDeleteFolder = async (folderId: string) => {
         if (!user) return;
-        if (confirm("Are you sure you want to delete this folder?")) {
+        if (confirm(t("common.confirmDeleteFolder"))) {
             try {
                 await deleteFolder(user.uid, folderId);
                 setFolders(folders.filter((f) => f.id !== folderId));
@@ -108,7 +110,7 @@ function SidebarContent() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 z-40 h-screen w-72 bg-gray-50 border-r border-gray-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
+                className={`fixed top-0 left-0 z-40 h-[100dvh] w-72 bg-gray-50 border-r border-gray-200 transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
                     }`}
             >
                 <div className="h-full flex flex-col p-6">
@@ -125,19 +127,19 @@ function SidebarContent() {
                         className="flex items-center justify-center gap-2 w-full bg-black text-white p-3 rounded-xl font-medium mb-8 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
                     >
                         <Plus className="w-5 h-5" />
-                        New Contact
+                        {t("common.newContact")}
                     </Link>
 
                     {/* Navigation */}
                     <nav className="flex-1 space-y-1 overflow-y-auto">
                         <div className="mb-6">
                             <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                Menu
+                                {t("common.menu")}
                             </p>
                             <NavItem
                                 href="/"
                                 icon={LayoutDashboard}
-                                label="All Contacts"
+                                label={t("common.allContacts")}
                                 active={pathname === "/" && !currentFolderId}
                                 onClick={() => setIsMobileOpen(false)}
                             />
@@ -146,7 +148,7 @@ function SidebarContent() {
                         <div className="mb-6">
                             <div className="flex items-center justify-between px-3 mb-2">
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                    Folders
+                                    {t("common.folders")}
                                 </p>
                                 <button
                                     onClick={() => setIsCreatingFolder(true)}
@@ -159,21 +161,21 @@ function SidebarContent() {
                             <NavItem
                                 href="/?folderId=drafts"
                                 icon={FolderIcon}
-                                label="Drafts"
+                                label={t("common.drafts")}
                                 active={currentFolderId === "drafts"}
                                 onClick={() => setIsMobileOpen(false)}
                             />
                             <NavItem
                                 href="/?folderId=sent"
                                 icon={Send}
-                                label="Sent"
+                                label={t("common.sent")}
                                 active={currentFolderId === "sent"}
                                 onClick={() => setIsMobileOpen(false)}
                             />
                             <NavItem
                                 href="/?folderId=trash"
                                 icon={Trash2}
-                                label="Trash"
+                                label={t("common.trash")}
                                 active={currentFolderId === "trash"}
                                 onClick={() => setIsMobileOpen(false)}
                             />
@@ -200,7 +202,7 @@ function SidebarContent() {
                                             if (e.key === "Enter") handleCreateFolder();
                                             if (e.key === "Escape") setIsCreatingFolder(false);
                                         }}
-                                        placeholder="Folder name..."
+                                        placeholder={t("common.folderName")}
                                         autoFocus
                                         className="w-full p-2 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-black"
                                     />
@@ -212,11 +214,11 @@ function SidebarContent() {
                     {/* User Profile & Settings */}
                     <div className="pt-6 border-t border-gray-200 space-y-2">
                         <button
-                            onClick={() => setIsSignatureModalOpen(true)}
+                            onClick={() => setIsSettingsModalOpen(true)}
                             className="flex items-center gap-3 w-full p-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors text-sm font-medium"
                         >
                             <Settings className="w-5 h-5" />
-                            Settings
+                            {t("common.settings")}
                         </button>
 
                         {user && (
@@ -241,9 +243,9 @@ function SidebarContent() {
                 </div>
             </aside>
 
-            <SignatureModal
-                isOpen={isSignatureModalOpen}
-                onClose={() => setIsSignatureModalOpen(false)}
+            <SettingsModal
+                isOpen={isSettingsModalOpen}
+                onClose={() => setIsSettingsModalOpen(false)}
             />
         </>
     );

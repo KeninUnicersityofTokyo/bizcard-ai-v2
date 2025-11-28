@@ -26,6 +26,8 @@ export const metadata: Metadata = {
 import MainLayout from "@/components/MainLayout";
 import { AuthProvider } from "@/context/AuthContext";
 
+import { LanguageProvider } from "@/context/LanguageContext";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -37,9 +39,11 @@ export default function RootLayout({
                 className={`${inter.className} antialiased bg-white text-gray-900`}
             >
                 <AuthProvider>
-                    <MainLayout>
-                        {children}
-                    </MainLayout>
+                    <LanguageProvider>
+                        <MainLayout>
+                            {children}
+                        </MainLayout>
+                    </LanguageProvider>
                 </AuthProvider>
             </body>
         </html>

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import {
     getContacts,
     getContactsByFolder,
@@ -38,6 +39,7 @@ function DashboardContent() {
     const searchParams = useSearchParams();
     const folderId = searchParams.get("folderId");
     const { user, loading } = useAuth();
+    const { t } = useLanguage();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [folders, setFolders] = useState<Folder[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
@@ -123,12 +125,12 @@ function DashboardContent() {
         if (!user) return;
 
         if (isTrash) {
-            if (confirm("この連絡先を完全に削除しますか？この操作は取り消せません。")) {
+            if (confirm(t("common.confirmDelete"))) {
                 await permanentlyDeleteContact(user.uid, id);
                 removeFromSelection(id);
             }
         } else {
-            if (confirm("この連絡先をゴミ箱に移動しますか？")) {
+            if (confirm(t("common.confirmDelete"))) {
                 await deleteContact(user.uid, id);
                 removeFromSelection(id);
             }
@@ -152,8 +154,8 @@ function DashboardContent() {
     const handleBulkDelete = async () => {
         if (!user) return;
         const message = isTrash
-            ? `選択した ${selectedContacts.size} 件の連絡先を完全に削除しますか？`
-            : `選択した ${selectedContacts.size} 件の連絡先をゴミ箱に移動しますか？`;
+            ? t("common.confirmDelete")
+            : t("common.confirmDelete");
 
         if (confirm(message)) {
             for (const id of Array.from(selectedContacts)) {
@@ -210,7 +212,7 @@ function DashboardContent() {
             <header className="flex items-center justify-between mb-8 pr-12 sm:pr-0">
                 <div className="flex items-center gap-4">
                     <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                        {isTrash ? "Trash" : (folderId ? (folders.find(f => f.id === folderId)?.name || "Folder View") : "All Contacts")}
+                        {isTrash ? t("common.trash") : (folderId ? (folders.find(f => f.id === folderId)?.name || "Folder View") : t("common.allContacts"))}
                     </h1>
                     <span className="text-gray-400 text-sm font-medium bg-gray-50 px-3 py-1 rounded-full">
                         {filteredContacts.length}
@@ -222,7 +224,7 @@ function DashboardContent() {
                         className="hidden sm:flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-sm hover:shadow-md"
                     >
                         <Plus className="w-5 h-5" />
-                        New Contact
+                        {t("common.newContact")}
                     </Link>
                 )}
             </header>
@@ -234,7 +236,7 @@ function DashboardContent() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search contacts..."
+                        placeholder={t("common.searchPlaceholder")}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black/5 outline-none shadow-sm placeholder:text-gray-400 transition-all"
@@ -252,7 +254,7 @@ function DashboardContent() {
                         ) : (
                             <Square className="w-5 h-5" />
                         )}
-                        Select All
+                        {t("common.selectAll")}
                     </button>
                 )}
             </div>
@@ -271,7 +273,7 @@ function DashboardContent() {
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                 {isTrash ? <Trash2 className="w-8 h-8 text-gray-300" /> : <User className="w-8 h-8 text-gray-300" />}
                             </div>
-                            <p className="text-gray-500 font-medium">{isTrash ? "ゴミ箱は空です" : "連絡先が見つかりません"}</p>
+                            <p className="text-gray-500 font-medium">{isTrash ? t("dashboard.emptyTrash") : t("dashboard.noContacts")}</p>
                         </div>
                     ) : (
                         filteredContacts.map((contact) => (
@@ -360,7 +362,7 @@ function DashboardContent() {
                                     </div>
 
                                     <div className="text-xs text-gray-600 line-clamp-2 bg-gray-50 p-4 rounded-xl border border-gray-100 leading-relaxed h-20">
-                                        <span className="font-semibold text-gray-900 block mb-1">Subject:</span>
+                                        <span className="font-semibold text-gray-900 block mb-1">{t("dashboard.subject")}</span>
                                         {contact.generatedEmail.subject}
                                     </div>
                                 </Link>
@@ -377,7 +379,7 @@ function DashboardContent() {
                         <span className="bg-black text-white text-xs font-bold px-2 py-1 rounded-md">
                             {selectedContacts.size}
                         </span>
-                        <span className="text-sm font-medium text-gray-600">Selected</span>
+                        <span className="text-sm font-medium text-gray-600">{t("common.selected")}</span>
                     </div>
 
                     <div className="flex items-center gap-4 flex-1">
@@ -387,7 +389,7 @@ function DashboardContent() {
                                 className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors whitespace-nowrap flex items-center gap-2"
                             >
                                 <RotateCcw className="w-4 h-4" />
-                                Restore
+                                {t("common.restore")}
                             </button>
                         ) : (
                             <div className="relative flex-1">
@@ -396,9 +398,9 @@ function DashboardContent() {
                                     onChange={(e) => setTargetFolderId(e.target.value)}
                                     className="w-full appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-black/5 cursor-pointer hover:bg-gray-100 transition-colors"
                                 >
-                                    <option value="">Move to folder...</option>
-                                    <option value="drafts">Drafts</option>
-                                    <option value="sent">Sent</option>
+                                    <option value="">{t("common.moveTo")}</option>
+                                    <option value="drafts">{t("common.drafts")}</option>
+                                    <option value="sent">{t("common.sent")}</option>
                                     {folders.map(f => (
                                         <option key={f.id} value={f.id}>{f.name}</option>
                                     ))}
@@ -413,7 +415,7 @@ function DashboardContent() {
                                 disabled={isMoving}
                                 className="bg-black text-white text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-50 whitespace-nowrap"
                             >
-                                {isMoving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Move"}
+                                {isMoving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.move")}
                             </button>
                         )}
                     </div>
@@ -424,7 +426,7 @@ function DashboardContent() {
                             className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-colors flex items-center gap-2 text-sm font-medium"
                         >
                             <Trash2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">{isTrash ? "Delete Permanently" : "Delete"}</span>
+                            <span className="hidden sm:inline">{isTrash ? t("common.deletePermanently") : t("common.delete")}</span>
                         </button>
                     </div>
 
