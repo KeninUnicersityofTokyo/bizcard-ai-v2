@@ -12,8 +12,8 @@ export default function LandingPage() {
             <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-sm z-50 border-b border-gray-100">
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-                        <img src="/logo.png" alt="BizCard AI Logo" className="w-8 h-8 object-contain" />
-                        BizCard AI
+                        <img src="/logo.png" alt="ReCard AI Logo" className="w-8 h-8 object-contain" />
+                        ReCard AI
                     </div>
                     <button
                         onClick={signInWithGoogle}
@@ -120,7 +120,7 @@ export default function LandingPage() {
 
             {/* Footer */}
             <footer className="py-12 px-6 border-t border-gray-100 text-center text-sm text-gray-400">
-                <p>&copy; {new Date().getFullYear()} BizCard AI. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} ReCard AI. All rights reserved.</p>
             </footer>
         </div>
     );

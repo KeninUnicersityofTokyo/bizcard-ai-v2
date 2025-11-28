@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "BizCard Instant Reply",
-    description: "Generate instant reply emails from business cards.",
+    title: "ReCard AI - Smart Business Card Manager",
+    description: "Scan business cards and generate AI emails instantly.",
 };
 
 import Sidebar from "@/components/Sidebar";
