@@ -10,7 +10,7 @@ import { extractContactDetails } from "@/actions/extractContactDetails";
 import { useAuth } from "@/context/AuthContext";
 import { saveContact, getSignature } from "@/lib/db";
 
-import { Loader2, Sparkles, ArrowLeft } from "lucide-react";
+import { Loader2, Sparkles, ArrowLeft, AlertTriangle, RefreshCw, PenTool } from "lucide-react";
 import Link from "next/link";
 
 export default function NewContactPage() {
@@ -28,6 +28,7 @@ export default function NewContactPage() {
     const [generatedEmail, setGeneratedEmail] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [scanError, setScanError] = useState<"TOTAL_FAILURE" | "PARTIAL_FAILURE" | null>(null);
 
     // Fetch signature on mount
     useState(() => {
@@ -41,16 +42,32 @@ export default function NewContactPage() {
     const handleImageSelected = async (base64: string) => {
         setImage(base64);
         setError(null);
+        setScanError(null);
         setIsLoading(true);
 
         try {
             // Extract details from image
             const extracted = await extractContactDetails(base64);
+
+            const isTotalFailure = !extracted.name && !extracted.company && !extracted.email;
+            const isPartialFailure = !extracted.name || !extracted.company || !extracted.email;
+
+            if (isTotalFailure) {
+                setScanError("TOTAL_FAILURE");
+                // Do NOT move to step 2
+                setIsLoading(false);
+                return;
+            }
+
             setManualDetails({
                 name: extracted.name || "",
                 company: extracted.company || "",
                 email: extracted.email || ""
             });
+
+            if (isPartialFailure) {
+                setScanError("PARTIAL_FAILURE");
+            }
 
             // Move to Step 2 (Settings)
             setStep(2);
@@ -58,8 +75,8 @@ export default function NewContactPage() {
             setIsManualDetailsOpen(true);
         } catch (error: any) {
             console.error("Extraction failed:", error);
-            // Still move to step 2, just empty details
-            setStep(2);
+            setScanError("TOTAL_FAILURE");
+            // Stay on step 1
         } finally {
             setIsLoading(false);
         }
@@ -67,6 +84,7 @@ export default function NewContactPage() {
 
     const handleSkipToManual = () => {
         setIsManualMode(true);
+        setScanError(null);
         setStep(2);
         setError(null);
         setIsManualDetailsOpen(true);
@@ -168,7 +186,39 @@ export default function NewContactPage() {
                         <ImageUploader onImageSelected={handleImageSelected} />
                     )}
 
-                    {!isLoading && (
+                    {/* Total Failure Alert */}
+                    {scanError === "TOTAL_FAILURE" && !isLoading && (
+                        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl animate-in fade-in slide-in-from-top-2">
+                            <div className="flex items-center gap-3 mb-3 text-red-700 font-bold">
+                                <AlertTriangle className="w-5 h-5" />
+                                <span>認識できませんでした</span>
+                            </div>
+                            <p className="text-sm text-red-600 mb-4">
+                                名刺の文字を読み取れませんでした。画像が鮮明か確認して再試行するか、手動で入力してください。
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setScanError(null);
+                                        setImage(null);
+                                    }}
+                                    className="flex-1 py-2.5 bg-white border border-red-200 text-red-700 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                    もう一度スキャン
+                                </button>
+                                <button
+                                    onClick={handleSkipToManual}
+                                    className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <PenTool className="w-4 h-4" />
+                                    手動で入力
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {!isLoading && scanError !== "TOTAL_FAILURE" && (
                         <div className="text-center mt-6">
                             <p className="text-slate-500 text-sm mb-2">- または -</p>
                             <button
@@ -189,6 +239,19 @@ export default function NewContactPage() {
                             <span className="text-xl font-bold text-gray-900">Configuration</span>
                         </div>
 
+                        {/* Partial Failure Alert */}
+                        {scanError === "PARTIAL_FAILURE" && (
+                            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-bold text-yellow-800 text-sm">一部読み取れなかった可能性があります</p>
+                                    <p className="text-xs text-yellow-700 mt-1">
+                                        赤枠の項目を確認し、必要に応じて修正してください。
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Contact Details (Editable) */}
                         <div className="mb-8 p-6 bg-white border border-gray-200 rounded-2xl shadow-sm space-y-5">
                             <div className="flex items-center justify-between">
@@ -204,7 +267,10 @@ export default function NewContactPage() {
                                     type="text"
                                     value={manualDetails.company}
                                     onChange={(e) => setManualDetails({ ...manualDetails, company: e.target.value })}
-                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    className={`w-full p-3.5 bg-white border rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all ${scanError === "PARTIAL_FAILURE" && !manualDetails.company
+                                            ? "border-red-300 bg-red-50 focus:bg-white"
+                                            : "border-gray-300"
+                                        }`}
                                     placeholder="会社名を入力"
                                 />
                             </div>
@@ -214,7 +280,10 @@ export default function NewContactPage() {
                                     type="text"
                                     value={manualDetails.name}
                                     onChange={(e) => setManualDetails({ ...manualDetails, name: e.target.value })}
-                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    className={`w-full p-3.5 bg-white border rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all ${scanError === "PARTIAL_FAILURE" && !manualDetails.name
+                                            ? "border-red-300 bg-red-50 focus:bg-white"
+                                            : "border-gray-300"
+                                        }`}
                                     placeholder="名前を入力"
                                 />
                             </div>
@@ -224,7 +293,10 @@ export default function NewContactPage() {
                                     type="email"
                                     value={manualDetails.email}
                                     onChange={(e) => setManualDetails({ ...manualDetails, email: e.target.value })}
-                                    className="w-full p-3.5 bg-white border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                    className={`w-full p-3.5 bg-white border rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all ${scanError === "PARTIAL_FAILURE" && !manualDetails.email
+                                            ? "border-red-300 bg-red-50 focus:bg-white"
+                                            : "border-gray-300"
+                                        }`}
                                     placeholder="email@example.com"
                                 />
                             </div>
