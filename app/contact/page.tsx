@@ -122,12 +122,13 @@ function ContactDetailContent() {
             setContact((prev: Contact | null) => prev ? { ...prev, folderId: "sent" } : null);
         }
 
-        const subject = encodeURIComponent(contact.generatedEmail.subject);
-        const body = encodeURIComponent(contact.generatedEmail.body);
-        const cc = contact.generatedEmail.cc ? `&cc=${encodeURIComponent(contact.generatedEmail.cc)}` : "";
-        const bcc = contact.generatedEmail.bcc ? `&bcc=${encodeURIComponent(contact.generatedEmail.bcc)}` : "";
+        const email = contact.email.trim();
+        const subject = encodeURIComponent(contact.generatedEmail.subject.trim());
+        const body = encodeURIComponent(contact.generatedEmail.body.trim());
+        const cc = contact.generatedEmail.cc ? `&cc=${encodeURIComponent(contact.generatedEmail.cc.trim())}` : "";
+        const bcc = contact.generatedEmail.bcc ? `&bcc=${encodeURIComponent(contact.generatedEmail.bcc.trim())}` : "";
 
-        window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}${cc}${bcc}`;
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}${cc}${bcc}`;
 
         // Navigate to Sent folder with a slight delay
         setTimeout(() => {
@@ -406,16 +407,28 @@ function ContactDetailContent() {
                                         <Send className="w-4 h-4" />
                                         Open in Mail App
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(contact.generatedEmail.body);
-                                            alert("本文をコピーしました！");
-                                        }}
-                                        className="w-full py-3.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-bold transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <Copy className="w-4 h-4" />
-                                        Copy Body Text
-                                    </button>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(contact.generatedEmail.subject);
+                                                alert("件名をコピーしました！");
+                                            }}
+                                            className="py-3.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-bold transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                            Copy Subject
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(contact.generatedEmail.body);
+                                                alert("本文をコピーしました！");
+                                            }}
+                                            className="py-3.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-bold transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                            Copy Body
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
