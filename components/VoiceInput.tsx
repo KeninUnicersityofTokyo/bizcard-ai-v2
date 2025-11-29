@@ -120,7 +120,7 @@ export default function VoiceInput({ onContextChange }: VoiceInputProps) {
             <textarea
                 value={text}
                 onChange={handleTextChange}
-                placeholder="例: 渋谷のカフェで会った。サウナの話で盛り上がった。来週資料を送る必要がある。"
+                placeholder="例: 今日出席きした展示会で会った。今やっている事業の話で盛り上がった。来週自分の行っている事業についての資料を送る必要がある。"
                 className="w-full h-32 p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-gray-200 focus:border-transparent resize-none outline-none transition-all"
             />
         </div>

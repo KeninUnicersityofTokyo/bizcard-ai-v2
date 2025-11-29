@@ -21,6 +21,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const [apiKey, setApiKey] = useState("");
     const [showApiKey, setShowApiKey] = useState(false);
 
+    const [signature, setSignature] = useState("");
+    const [isLoadingSignature, setIsLoadingSignature] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
     useEffect(() => {
         if (isOpen) {
             // Load API Key from localStorage
