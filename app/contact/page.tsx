@@ -22,7 +22,8 @@ import {
     X,
     RotateCcw,
     AlertTriangle,
-    Share2
+    Share2,
+    Copy
 } from "lucide-react";
 import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -397,13 +398,25 @@ function ContactDetailContent() {
                                 )}
                             </div>
                             {!isEditing && !isTrash && (
-                                <button
-                                    onClick={handleOpenMailer}
-                                    className="w-full py-3.5 bg-black hover:bg-gray-800 text-white rounded-full font-bold transition-all shadow-md flex items-center justify-center gap-2"
-                                >
-                                    <Send className="w-4 h-4" />
-                                    Open in Mail App
-                                </button>
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={handleOpenMailer}
+                                        className="w-full py-3.5 bg-black hover:bg-gray-800 text-white rounded-full font-bold transition-all shadow-md flex items-center justify-center gap-2"
+                                    >
+                                        <Send className="w-4 h-4" />
+                                        Open in Mail App
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(contact.generatedEmail.body);
+                                            alert("本文をコピーしました！");
+                                        }}
+                                        className="w-full py-3.5 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-bold transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                        Copy Body Text
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
