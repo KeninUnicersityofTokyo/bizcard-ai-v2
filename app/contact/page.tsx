@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import ShareModal from "@/components/ShareModal";
 import {
     ArrowLeft,
     Mail,
@@ -20,7 +21,8 @@ import {
     Save,
     X,
     RotateCcw,
-    AlertTriangle
+    AlertTriangle,
+    Share2
 } from "lucide-react";
 import { Contact, Folder } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -45,6 +47,7 @@ function ContactDetailContent() {
     const [image, setImage] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [editForm, setEditForm] = useState({
         name: "",
         company: "",
@@ -210,6 +213,13 @@ function ContactDetailContent() {
                         </>
                     ) : (
                         <>
+                            <button
+                                onClick={() => setIsShareModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
+                            >
+                                <Share2 className="w-4 h-4" />
+                                Share
+                            </button>
                             <button
                                 onClick={() => setIsEditing(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm"
@@ -421,6 +431,12 @@ function ContactDetailContent() {
                     </div>
                 </div>
             </div>
+
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                contact={contact}
+            />
         </div>
     );
 }

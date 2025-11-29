@@ -312,3 +312,39 @@ export const saveSignature = async (userId: string, text: string) => {
         throw e;
     }
 };
+
+// --- Sharing ---
+
+export const createSharedItem = async (userId: string, contact: Contact): Promise<string> => {
+    try {
+        // Create a new document in the root 'shared_items' collection
+        // We store a snapshot of the contact data
+        const data = {
+            ownerId: userId,
+            originalContactId: contact.id,
+            data: contact,
+            createdAt: Date.now(),
+        };
+
+        const docRef = await addDoc(collection(db, "shared_items"), data);
+        return docRef.id;
+    } catch (e) {
+        console.error("Error creating shared item:", e);
+        throw e;
+    }
+};
+
+export const getSharedItem = async (shareId: string): Promise<any | null> => {
+    try {
+        const docRef = doc(db, "shared_items", shareId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() };
+        }
+        return null;
+    } catch (e) {
+        console.error("Error fetching shared item:", e);
+        return null;
+    }
+};

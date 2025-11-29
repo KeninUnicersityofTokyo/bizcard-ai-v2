@@ -20,3 +20,12 @@ export interface Contact {
     };
     createdAt: number;
 }
+
+export interface SharedItem {
+    id: string;
+    ownerId: string;
+    originalContactId: string;
+    data: Contact;
+    createdAt: number;
+    expiresAt?: number;
+}
