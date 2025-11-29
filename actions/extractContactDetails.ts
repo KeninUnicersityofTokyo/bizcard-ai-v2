@@ -9,7 +9,7 @@ export async function extractContactDetails(imageBase64: string, apiKey?: string
             throw new Error("APIキーが設定されていません。設定画面からGemini APIキーを保存してください。");
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
+        const genAI = new GoogleGenerativeAI(finalApiKey);
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash",
             generationConfig: { responseMimeType: "application/json" }
