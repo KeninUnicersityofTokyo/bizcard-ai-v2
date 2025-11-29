@@ -92,9 +92,9 @@ function DashboardContent() {
     }, [user, loading, folderId, isTrash]);
 
     // Clear selection when folder or search changes
-    useEffect(() => {
-        setSelectedContacts(new Set());
-    }, [folderId, searchTerm]);
+    // useEffect(() => {
+    //     setSelectedContacts(new Set());
+    // }, [folderId, searchTerm]);
 
     const filteredContacts = contacts.filter(
         (c) =>
@@ -289,9 +289,10 @@ function DashboardContent() {
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            e.preventDefault();
                                             toggleSelect(contact.id);
                                         }}
-                                        className={`p-1 rounded-md transition-colors ${selectedContacts.has(contact.id)
+                                        className={`p-3 rounded-md transition-colors ${selectedContacts.has(contact.id)
                                             ? "text-blue-600 bg-blue-50"
                                             : "text-gray-300 hover:text-gray-500 bg-white/80 backdrop-blur-sm"
                                             }`}
