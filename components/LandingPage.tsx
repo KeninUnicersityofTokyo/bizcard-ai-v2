@@ -95,6 +95,45 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Setup Guide */}
+            <section className="py-20 px-6 bg-white">
+                <div className="max-w-4xl mx-auto">
+                    <h2 className="text-3xl font-bold text-center mb-16">Getting Started</h2>
+                    <div className="grid md:grid-cols-3 gap-12 text-center">
+                        <div className="space-y-4">
+                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto text-blue-600">
+                                <span className="text-2xl font-bold">1</span>
+                            </div>
+                            <h3 className="text-xl font-bold">Get API Key</h3>
+                            <p className="text-gray-500">
+                                Google AI Studioから<br />
+                                無料のGemini APIキーを取得
+                            </p>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto text-purple-600">
+                                <span className="text-2xl font-bold">2</span>
+                            </div>
+                            <h3 className="text-xl font-bold">Set Key</h3>
+                            <p className="text-gray-500">
+                                アプリ内の設定画面で<br />
+                                キーを保存（ブラウザ保存で安全）
+                            </p>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto text-green-600">
+                                <span className="text-2xl font-bold">3</span>
+                            </div>
+                            <h3 className="text-xl font-bold">Ready to Go</h3>
+                            <p className="text-gray-500">
+                                これで準備完了。<br />
+                                AIによる爆速メール作成を体験しよう
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* How it Works */}
             <section id="how-it-works" className="py-24 px-6">
                 <div className="max-w-4xl mx-auto">

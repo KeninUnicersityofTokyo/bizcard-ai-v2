@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Folder } from "@/types";
 import { createFolder, deleteFolder, getFolders } from "@/lib/db";
 import SettingsModal from "./SettingsModal";
+import TutorialModal from "./TutorialModal";
 import { useLanguage } from "@/context/LanguageContext";
 
 const NavItem = ({ href, icon: Icon, label, active, onDelete, onClick }: any) => (
@@ -60,6 +61,7 @@ function SidebarContent() {
     const [newFolderName, setNewFolderName] = useState("");
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -216,6 +218,14 @@ function SidebarContent() {
                     {/* User Profile & Settings */}
                     <div className="pt-6 border-t border-gray-200 space-y-2">
                         <button
+                            onClick={() => setIsTutorialOpen(true)}
+                            className="flex items-center gap-3 w-full p-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors text-sm font-medium"
+                        >
+                            <div className="w-5 h-5 flex items-center justify-center border-2 border-gray-400 rounded-full text-[10px] font-bold text-gray-500">?</div>
+                            Help & Guide
+                        </button>
+
+                        <button
                             onClick={() => setIsSettingsModalOpen(true)}
                             className="flex items-center gap-3 w-full p-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors text-sm font-medium"
                         >
@@ -261,6 +271,10 @@ function SidebarContent() {
             <SettingsModal
                 isOpen={isSettingsModalOpen}
                 onClose={() => setIsSettingsModalOpen(false)}
+            />
+            <TutorialModal
+                isOpen={isTutorialOpen}
+                onClose={() => setIsTutorialOpen(false)}
             />
         </>
     );
