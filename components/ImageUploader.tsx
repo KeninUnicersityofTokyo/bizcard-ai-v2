@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Camera as CameraIcon, Upload } from "lucide-react";
-import { Capacitor } from "@capacitor/core";
-import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 
 interface ImageUploaderProps {
     onImageSelected: (base64: string) => void;
@@ -11,30 +9,7 @@ interface ImageUploaderProps {
 
 export default function ImageUploader({ onImageSelected }: ImageUploaderProps) {
     const [preview, setPreview] = useState<string | null>(null);
-    const [isNative, setIsNative] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        setIsNative(Capacitor.isNativePlatform());
-    }, []);
-
-    const handleNativeCamera = async () => {
-        try {
-            const image = await Camera.getPhoto({
-                quality: 90,
-                allowEditing: true,
-                resultType: CameraResultType.DataUrl,
-                source: CameraSource.Prompt,
-            });
-
-            if (image.dataUrl) {
-                setPreview(image.dataUrl);
-                onImageSelected(image.dataUrl);
-            }
-        } catch (error) {
-            console.error("Camera error:", error);
-        }
-    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -73,11 +48,6 @@ export default function ImageUploader({ onImageSelected }: ImageUploaderProps) {
             </h2>
 
             <div
-                onClick={() => {
-                    if (isNative) {
-                        handleNativeCamera();
-                    }
-                }}
                 className="relative aspect-video bg-gray-50 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center group hover:border-gray-400 transition-colors cursor-pointer"
             >
                 {preview ? (
@@ -95,21 +65,19 @@ export default function ImageUploader({ onImageSelected }: ImageUploaderProps) {
                     <div className="text-center p-6 z-10 pointer-events-none">
                         <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3 group-hover:text-gray-600 transition-colors" />
                         <p className="text-gray-500 text-sm font-medium">
-                            {isNative ? "Tap to take photo" : "Tap to launch camera\nor select image"}
+                            Tap to launch camera<br />or select image
                         </p>
                     </div>
                 )}
 
-                {!isNative && (
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handleFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                    />
-                )}
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                />
             </div>
 
             {preview && (
