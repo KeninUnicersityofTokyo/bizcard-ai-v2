@@ -130,10 +130,9 @@ function DashboardContent() {
                 removeFromSelection(id);
             }
         } else {
-            if (confirm(t("common.confirmDelete"))) {
-                await deleteContact(user.uid, id);
-                removeFromSelection(id);
-            }
+            // Direct delete (move to trash) without confirmation
+            await deleteContact(user.uid, id);
+            removeFromSelection(id);
         }
     };
 
@@ -153,17 +152,18 @@ function DashboardContent() {
 
     const handleBulkDelete = async () => {
         if (!user) return;
-        const message = isTrash
-            ? t("common.confirmDelete")
-            : t("common.confirmDelete");
 
-        if (confirm(message)) {
-            for (const id of Array.from(selectedContacts)) {
-                if (isTrash) {
+        if (isTrash) {
+            if (confirm(t("common.confirmDelete"))) {
+                for (const id of Array.from(selectedContacts)) {
                     await permanentlyDeleteContact(user.uid, id);
-                } else {
-                    await deleteContact(user.uid, id);
                 }
+                setSelectedContacts(new Set());
+            }
+        } else {
+            // Direct bulk delete (move to trash) without confirmation
+            for (const id of Array.from(selectedContacts)) {
+                await deleteContact(user.uid, id);
             }
             setSelectedContacts(new Set());
         }
