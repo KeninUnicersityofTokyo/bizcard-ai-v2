@@ -46,8 +46,11 @@ export default function NewContactPage() {
         setIsLoading(true);
 
         try {
+            // Get API Key
+            const apiKey = localStorage.getItem("gemini_api_key") || undefined;
+
             // Extract details from image
-            const extracted = await extractContactDetails(base64);
+            const extracted = await extractContactDetails(base64, apiKey);
 
             const isTotalFailure = !extracted.name && !extracted.company && !extracted.email;
             const isPartialFailure = !extracted.name || !extracted.company || !extracted.email;
@@ -75,7 +78,12 @@ export default function NewContactPage() {
             setIsManualDetailsOpen(true);
         } catch (error: any) {
             console.error("Extraction failed:", error);
-            setScanError("TOTAL_FAILURE");
+            if (error.message?.includes("APIキー")) {
+                alert("APIキーが設定されていません。左上の設定メニューからAPIキーを保存してください。");
+                setError("APIキーが設定されていません。設定メニューから保存してください。");
+            } else {
+                setScanError("TOTAL_FAILURE");
+            }
             // Stay on step 1
         } finally {
             setIsLoading(false);
@@ -96,12 +104,16 @@ export default function NewContactPage() {
         setIsLoading(true);
         setError(null);
         try {
+            // Get API Key
+            const apiKey = localStorage.getItem("gemini_api_key") || undefined;
+
             const result = await generateEmail(
                 image,
                 context,
                 manualDetails, // Always pass manualDetails (it contains extracted or manual info)
                 platform,
-                tone
+                tone,
+                apiKey
             );
 
             // Append signature if exists
@@ -113,7 +125,12 @@ export default function NewContactPage() {
             setStep(3);
         } catch (error: any) {
             console.error(error);
-            setError(error.message || "予期せぬエラーが発生しました。");
+            if (error.message?.includes("APIキー")) {
+                alert("APIキーが設定されていません。左上の設定メニューからAPIキーを保存してください。");
+                setError("APIキーが設定されていません。設定メニューから保存してください。");
+            } else {
+                setError(error.message || "予期せぬエラーが発生しました。");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -268,8 +285,8 @@ export default function NewContactPage() {
                                     value={manualDetails.company}
                                     onChange={(e) => setManualDetails({ ...manualDetails, company: e.target.value })}
                                     className={`w-full p-3.5 bg-white border rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all ${scanError === "PARTIAL_FAILURE" && !manualDetails.company
-                                            ? "border-red-300 bg-red-50 focus:bg-white"
-                                            : "border-gray-300"
+                                        ? "border-red-300 bg-red-50 focus:bg-white"
+                                        : "border-gray-300"
                                         }`}
                                     placeholder="会社名を入力"
                                 />
@@ -281,8 +298,8 @@ export default function NewContactPage() {
                                     value={manualDetails.name}
                                     onChange={(e) => setManualDetails({ ...manualDetails, name: e.target.value })}
                                     className={`w-full p-3.5 bg-white border rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all ${scanError === "PARTIAL_FAILURE" && !manualDetails.name
-                                            ? "border-red-300 bg-red-50 focus:bg-white"
-                                            : "border-gray-300"
+                                        ? "border-red-300 bg-red-50 focus:bg-white"
+                                        : "border-gray-300"
                                         }`}
                                     placeholder="名前を入力"
                                 />
@@ -294,8 +311,8 @@ export default function NewContactPage() {
                                     value={manualDetails.email}
                                     onChange={(e) => setManualDetails({ ...manualDetails, email: e.target.value })}
                                     className={`w-full p-3.5 bg-white border rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all ${scanError === "PARTIAL_FAILURE" && !manualDetails.email
-                                            ? "border-red-300 bg-red-50 focus:bg-white"
-                                            : "border-gray-300"
+                                        ? "border-red-300 bg-red-50 focus:bg-white"
+                                        : "border-gray-300"
                                         }`}
                                     placeholder="email@example.com"
                                 />

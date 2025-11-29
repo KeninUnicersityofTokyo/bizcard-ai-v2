@@ -2,11 +2,11 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export async function extractContactDetails(imageBase64: string) {
+export async function extractContactDetails(imageBase64: string, apiKey?: string) {
     try {
-        const apiKey = (process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
-        if (!apiKey) {
-            throw new Error("APIキーが設定されていません。");
+        const finalApiKey = (apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
+        if (!finalApiKey) {
+            throw new Error("APIキーが設定されていません。設定画面からGemini APIキーを保存してください。");
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);

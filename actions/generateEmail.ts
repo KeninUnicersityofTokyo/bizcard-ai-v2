@@ -9,15 +9,16 @@ export async function generateEmail(
     context: string,
     manualDetails?: { name: string; company: string; email: string },
     platform: "email" | "linkedin" | "slack" = "email",
-    tone: "3" | "2" | "1" = "2"
+    tone: "3" | "2" | "1" = "2",
+    apiKey?: string
 ) {
     try {
-        const apiKey = (process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
-        if (!apiKey) {
-            throw new Error("APIキーが設定されていません。.env.localを確認してください。");
+        const finalApiKey = (apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
+        if (!finalApiKey) {
+            throw new Error("APIキーが設定されていません。設定画面からGemini APIキーを保存してください。");
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
+        const genAI = new GoogleGenerativeAI(finalApiKey);
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash",
             generationConfig: { responseMimeType: "application/json" }
