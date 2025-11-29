@@ -62,12 +62,13 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
 
             if (success) {
                 // Open Mailer
-                const subject = encodeURIComponent(data.subject);
-                const body = encodeURIComponent(data.body);
-                const cc = data.cc ? `& cc=${encodeURIComponent(data.cc)} ` : "";
-                const bcc = data.bcc ? `& bcc=${encodeURIComponent(data.bcc)} ` : "";
+                const email = data.email.trim();
+                const subject = encodeURIComponent(data.subject.trim());
+                const body = encodeURIComponent(data.body.trim());
+                const cc = data.cc ? `&cc=${encodeURIComponent(data.cc.trim())}` : "";
+                const bcc = data.bcc ? `&bcc=${encodeURIComponent(data.bcc.trim())}` : "";
 
-                window.location.href = `mailto:${data.email}?subject = ${subject}& body=${body}${cc}${bcc} `;
+                window.location.href = `mailto:${email}?subject=${subject}&body=${body}${cc}${bcc}`;
 
                 // Navigate (via onSaveSuccess)
                 setTimeout(() => {
@@ -161,6 +162,16 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         className="flex-1 bg-transparent outline-none text-gray-900 font-semibold text-sm"
                         placeholder="件名を入力"
                     />
+                    <button
+                        onClick={() => {
+                            navigator.clipboard.writeText(data.subject);
+                            alert("件名をコピーしました！");
+                        }}
+                        className="text-xs text-gray-400 hover:text-gray-600 font-medium px-2"
+                        title="Copy Subject"
+                    >
+                        <Copy className="w-4 h-4" />
+                    </button>
                 </div>
 
                 {/* Body */}
@@ -190,7 +201,18 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     />
 
                     {/* AI Refinement Button */}
-                    <div className="absolute bottom-4 right-4 z-10">
+                    <div className="absolute bottom-4 right-4 z-10 flex gap-2">
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(data.body);
+                                alert("本文をコピーしました！");
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-white/90 text-gray-700 hover:bg-white hover:text-gray-900 rounded-full shadow-sm border border-gray-200 transition-all text-xs font-bold"
+                            title="Copy Body"
+                        >
+                            <Copy className="w-3 h-3" />
+                            Copy Body
+                        </button>
                         <button
                             onClick={toggleRecording}
                             disabled={isRefining}
@@ -248,10 +270,10 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                     <button
                         onClick={handleSaveClick}
                         disabled={isSaving || isSuccess}
-                        className={`p - 2 rounded - full transition - all duration - 300 flex items - center gap - 2 ${isSuccess
+                        className={`p-2 rounded-full transition-all duration-300 flex items-center gap-2 ${isSuccess
                             ? "bg-green-100 text-green-700 px-4"
                             : "text-gray-400 hover:text-gray-900 hover:bg-gray-200"
-                            } disabled: opacity - 100`}
+                            } disabled:opacity-100`}
                         title="下書きを保存"
                     >
                         {isSaving ? (
@@ -264,13 +286,6 @@ export default function EmailPreview({ initialData, onSave, onSaveSuccess }: Ema
                         ) : (
                             <Save className="w-5 h-5" />
                         )}
-                    </button>
-                    <button
-                        onClick={handleCopy}
-                        className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors"
-                        title="Copy Text"
-                    >
-                        {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
                     </button>
                 </div>
             </div>
