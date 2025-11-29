@@ -116,6 +116,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         <button
                             onClick={onClose}
                             className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"
+                            aria-label="Close settings"
                         >
                             <X className="w-5 h-5" />
                         </button>

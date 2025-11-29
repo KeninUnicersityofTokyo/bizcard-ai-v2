@@ -43,6 +43,7 @@ export default function TutorialModal({ isOpen, onClose }: TutorialModalProps) {
                     <button
                         onClick={onClose}
                         className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"
+                        aria-label="Close tutorial"
                     >
                         <X className="w-5 h-5" />
                     </button>

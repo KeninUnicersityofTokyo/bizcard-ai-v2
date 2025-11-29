@@ -43,6 +43,7 @@ const NavItem = ({ href, icon: Icon, label, active, onDelete, onClick }: any) =>
                     onDelete();
                 }}
                 className="p-1.5 text-gray-400 hover:bg-gray-200 hover:text-red-600 rounded-lg transition-colors"
+                aria-label="Delete folder"
             >
                 <Trash2 className="w-4 h-4" />
             </button>
@@ -157,6 +158,7 @@ function SidebarContent() {
                                 <button
                                     onClick={() => setIsCreatingFolder(true)}
                                     className="text-gray-400 hover:text-gray-900 transition-colors"
+                                    aria-label={t("common.newFolder") || "New Folder"}
                                 >
                                     <Plus className="w-4 h-4" />
                                 </button>
