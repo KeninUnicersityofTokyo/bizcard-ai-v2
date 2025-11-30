@@ -20,10 +20,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     // If logged in, show Sidebar and content with margin
     return (
         <div className="flex min-h-screen">
-            <Suspense fallback={<div className="w-72 bg-white border-r border-gray-100 hidden lg:block" />}>
+            <Suspense fallback={<div className="w-64 bg-white border-r border-gray-100 hidden lg:block" />}>
                 <Sidebar />
             </Suspense>
-            <main className="flex-1 p-4 md:p-8 overflow-y-auto lg:ml-72">
+            <main className="flex-1 p-4 md:p-8 overflow-y-auto">
                 {children}
             </main>
         </div>
